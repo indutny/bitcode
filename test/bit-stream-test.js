@@ -14,7 +14,9 @@ describe('bitcode/BitStream', () => {
     const SIZE = 32000;
     for (let i = 0; i < SIZE; i++)
       b.writeByte(i & 0xff);
+    assert.strictEqual(b.bitOffset, SIZE * 8);
     b.end();
+    assert.strictEqual(b.bitOffset, SIZE * 8);
 
     const res = b.read(SIZE);
     assert.strictEqual(res.length, SIZE);
@@ -31,7 +33,9 @@ describe('bitcode/BitStream', () => {
       // This should make alignment more complicated
       b.writeByte(i & 0xff);
     }
+    assert.strictEqual(b.bitOffset, SIZE * 8);
     b.end();
+    assert.strictEqual(b.bitOffset, SIZE * 8);
 
     const res = b.read(SIZE);
     assert.strictEqual(res.length, SIZE);
@@ -50,7 +54,9 @@ describe('bitcode/BitStream', () => {
       // This should make alignment more complicated
       b.writeByte(i & 0xff);
     }
+    assert.strictEqual(b.bitOffset, SIZE * 8);
     b.end();
+    assert.strictEqual(b.bitOffset, SIZE * 8);
 
     const res = b.read(SIZE);
     assert.strictEqual(res.length, SIZE);
@@ -65,8 +71,11 @@ describe('bitcode/BitStream', () => {
 
   it('should write mixed bits', () => {
     b.writeBits(3, 31);
+    assert.strictEqual(b.bitOffset, 31);
     b.writeBits(7, 4);
+    assert.strictEqual(b.bitOffset, 35);
     b.end();
+    assert.strictEqual(b.bitOffset, 40);
     const res = b.read(5);
     assert(!b.read());
 

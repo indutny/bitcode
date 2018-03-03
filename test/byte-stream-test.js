@@ -15,6 +15,7 @@ describe('bitcode/ByteStream', () => {
     for (let i = 0; i < SIZE; i++)
       b.writeByte(i & 0xff);
     b.end();
+    assert.strictEqual(b.offset, SIZE);
 
     const res = b.read(SIZE);
     assert.strictEqual(res.length, SIZE);
@@ -32,6 +33,7 @@ describe('bitcode/ByteStream', () => {
       b.writeByte(i & 0xff);
     }
     b.end();
+    assert.strictEqual(b.offset, SIZE);
 
     const res = b.read(SIZE);
     assert.strictEqual(res.length, SIZE);
@@ -51,6 +53,7 @@ describe('bitcode/ByteStream', () => {
       b.writeByte(i & 0xff);
     }
     b.end();
+    assert.strictEqual(b.offset, SIZE);
 
     const res = b.read(SIZE);
     assert.strictEqual(res.length, SIZE);
