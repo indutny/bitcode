@@ -1,0 +1,17 @@
+{
+  "name": "bitcode",
+  "version": "1.0.0",
+  "description": "LLVM bitcode generator",
+  "main": "lib/bitcode.js",
+  "scripts": {
+    "lint": "eslint lib/* lib/**/* test/*",
+    "test": "mocha --reporter spec test/*-test.js && npm run lint"
+  },
+  "keywords": [],
+  "author": "Fedor Indutny <fedor@indutny.com> (http://darksi.de/)",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^4.18.2",
+    "mocha": "^5.0.1"
+  }
+}
