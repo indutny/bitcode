@@ -65,4 +65,61 @@ describe('bitcode/ByteStream', () => {
 
     assert(!b.read());
   });
+
+  it('should reserve dwords', () => {
+    const SIZE = 16384;
+
+    // Reserve two early
+    const res1 = b.reserveDWord();
+    const res2 = b.reserveDWord();
+
+    // Pad
+    for (let i = 8; i < SIZE; i++) {
+      // This should make alignment more complicated
+      b.writeByte(i & 0xff);
+    }
+
+    // Reserve two late
+    const res3 = b.reserveDWord();
+    const res4 = b.reserveDWord();
+
+    // Pad again
+    for (let i = 8; i < SIZE; i++) {
+      // This should make alignment more complicated
+      b.writeByte(i & 0xff);
+    }
+
+    assert.throws(() => b.end(), /unresolved/);
+    assert.strictEqual(b.offset, SIZE * 2);
+
+    b.resolveDWord(res1, 0xdeadc0de);
+    assert.throws(() => b.end(), /unresolved/);
+    assert(!b.read());
+    b.resolveDWord(res2, 0xdeadc1de);
+    assert.throws(() => b.end(), /unresolved/);
+
+    let part = b.read();
+    assert.strictEqual(part.length, SIZE);
+    assert(!b.read());
+
+    assert.strictEqual(part.readUInt32LE(0), 0xdeadc0de);
+    assert.strictEqual(part.readUInt32LE(4), 0xdeadc1de);
+    for (let i = 8; i < SIZE; i++)
+      assert.strictEqual(part[i], i & 0xff, 'Mismatch at: ' + i);
+
+    b.resolveDWord(res3, 0xabbaabba);
+    assert.throws(() => b.end(), /unresolved/);
+    assert(!b.read());
+    b.resolveDWord(res4, 0xbaabbaab);
+    b.end();
+
+    part = b.read();
+    assert.strictEqual(part.length, SIZE);
+    assert(!b.read());
+
+    assert.strictEqual(part.readUInt32LE(0), 0xabbaabba);
+    assert.strictEqual(part.readUInt32LE(4), 0xbaabbaab);
+    for (let i = 8; i < SIZE; i++)
+      assert.strictEqual(part[i], i & 0xff, 'Mismatch at: ' + i);
+  });
 });
