@@ -81,4 +81,16 @@ describe('bitcode/BitStream', () => {
 
     assert.strictEqual(res.toString('hex'), '0300008003');
   });
+
+  it('should align', () => {
+    b.writeBits(3, 31);
+    b.align(32);
+    assert.strictEqual(b.bitOffset, 32);
+    b.end();
+    assert.strictEqual(b.bitOffset, 32);
+    const res = b.read(4);
+    assert(!b.read());
+
+    assert.strictEqual(res.toString('hex'), '03000000');
+  });
 });
