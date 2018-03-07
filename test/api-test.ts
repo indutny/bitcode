@@ -1,15 +1,30 @@
 import { Builder } from 'bitcode-builder';
-import { Compiler } from '../';
+import { Module } from '../';
 
 describe('bitcode/compiler', () => {
-  let compiler: Compiler;
+  let m: Module;
   let b: Builder;
   beforeEach(() => {
-    compiler = new Compiler();
-    b = compiler.builder('test.ll');
+    m = new Module('test.ll');
+    b = m.createBuilder();
   });
 
-  it('should compile program', () => {
-    // no-op
+  it('should compile a module', () => {
+    const fn = b.signature(b.i(32), [ b.i(32), b.i(32) ]).defineFunction(
+      'fn_name',
+      [ 'param1', 'param2' ],
+    );
+
+    const sum = fn.body.binop('add', fn.getArgument('param1'),
+      fn.getArgument('param2'));
+    fn.body.ret(sum);
+
+    const glob = b.global(b.i(8).ptr(), 'some_global', b.i(8).val(1));
+
+    m.add(fn);
+    m.add(glob);
+
+    const bc = m.build();
+    console.log(bc);
   });
 });
