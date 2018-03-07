@@ -3,15 +3,30 @@
   "version": "1.0.0",
   "description": "LLVM bitcode generator",
   "main": "lib/bitcode.js",
+  "types": "lib/bitcode.d.ts",
   "scripts": {
-    "lint": "eslint lib/* lib/**/* test/*",
-    "test": "mocha --reporter spec test/*-test.js && npm run lint"
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "prepublish": "npm run clean && npm run build",
+    "lint": "tslint -c tslint.json src/*.ts test/*.ts",
+    "test": "npm run build && mocha -r ts-node/register/type-check --reporter spec test/*-test.ts && npm run lint"
   },
-  "keywords": [],
+  "keywords": [
+    "bitcode",
+    "binary",
+    "llvm"
+  ],
   "author": "Fedor Indutny <fedor@indutny.com> (http://darksi.de/)",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^4.18.2",
-    "mocha": "^5.0.1"
+    "@types/mocha": "^2.2.48",
+    "@types/node": "^9.4.6",
+    "mocha": "^5.0.1",
+    "ts-node": "^5.0.1",
+    "tslint": "^5.9.1",
+    "typescript": "^2.7.2"
+  },
+  "dependencies": {
+    "bitcode-builder": "^1.0.0-beta4"
   }
 }
