@@ -5,6 +5,7 @@
     ],
     "jsRules": {},
     "rules": {
+      "no-bitwise": null,
       "quotemark": [
         true, "single", "avoid-escape", "avoid-template"
       ]

@@ -8,7 +8,7 @@
     "build": "tsc",
     "clean": "rm -rf lib",
     "prepublish": "npm run clean && npm run build",
-    "lint": "tslint -c tslint.json src/*.ts test/*.ts",
+    "lint": "tslint -c tslint.json src/*.ts src/**/*.ts test/*.ts",
     "test": "npm run build && mocha -r ts-node/register/type-check --reporter spec test/*-test.ts && npm run lint"
   },
   "keywords": [

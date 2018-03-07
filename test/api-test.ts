@@ -25,6 +25,5 @@ describe('bitcode/compiler', () => {
     m.add(glob);
 
     const bc = m.build();
-    console.log(bc);
   });
 });

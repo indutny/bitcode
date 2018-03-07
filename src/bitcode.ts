@@ -22,7 +22,7 @@ export class Module {
   }
 
   public build(): Buffer {
-    return Buffer.alloc(32);
+    return Buffer.alloc(0);
   }
 
   // Convenience methods
