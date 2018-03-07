@@ -7,8 +7,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib",
-    "prepublish": "npm run clean && npm run build",
-    "lint": "tslint -c tslint.json src/*.ts src/**/*.ts test/*.ts",
+    "prepare": "npm run clean && npm run build",
+    "lint": "tslint -c tslint.json src/*.ts src/**/*.ts src/**/**/*.ts test/*.ts",
     "test": "npm run build && mocha -r ts-node/register/type-check --reporter spec test/*-test.ts && npm run lint"
   },
   "keywords": [
@@ -27,6 +27,6 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "bitcode-builder": "^1.0.0-beta4"
+    "bitcode-builder": "^1.0.0-beta5"
   }
 }

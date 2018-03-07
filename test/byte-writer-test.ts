@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import { ByteWriter } from '../lib/writers/byte-writer';
+import { ByteWriter } from '../lib/writers';
 
 describe('bitcode/writers/byte-writer', () => {
   let b: ByteWriter;
