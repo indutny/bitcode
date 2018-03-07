@@ -25,7 +25,8 @@ export class ByteWriter {
     const chunk = this.ensureChunk();
 
     // We have at least one byte here
-    chunk[this.chunkOffset++] = val;
+    chunk.writeUInt8(val >>> 0, this.chunkOffset);
+    this.chunkOffset++;
     this.chunkLeft--;
 
     return this;
@@ -35,7 +36,7 @@ export class ByteWriter {
     const chunk = this.ensureChunk();
 
     if (this.chunkLeft >= 2) {
-      chunk.writeUInt16LE(val & 0xffff, this.chunkOffset);
+      chunk.writeUInt16LE((val & 0xffff) >>> 0, this.chunkOffset);
       this.chunkLeft -= 2;
       this.chunkOffset += 2;
       return this;
@@ -43,7 +44,7 @@ export class ByteWriter {
 
     // Just one byte available
     this.writeByte(val & 0xff);
-    this.writeByte((val >>> 8) & 0xff);
+    this.writeByte((val >> 8) & 0xff);
 
     return this;
   }
@@ -52,7 +53,7 @@ export class ByteWriter {
     const chunk = this.ensureChunk();
 
     if (this.chunkLeft >= 4) {
-      chunk.writeUInt32LE(val | 0, this.chunkOffset);
+      chunk.writeUInt32LE(val >>> 0, this.chunkOffset);
       this.chunkLeft -= 4;
       this.chunkOffset += 4;
       return this;
@@ -60,7 +61,7 @@ export class ByteWriter {
 
     // Less than four bytes available
     this.writeWord(val & 0xffff);
-    this.writeWord((val >>> 16) & 0xffff);
+    this.writeWord((val >> 16) & 0xffff);
 
     return this;
   }
