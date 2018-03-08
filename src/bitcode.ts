@@ -4,6 +4,7 @@ import { Buffer } from 'buffer';
 import { Abbr, BitStream } from './bitstream';
 import { BLOCK_ID, MODULE_CODE } from './constants';
 import { Enumerator } from './enumerator';
+import { Strtab } from './strtab';
 import { TypeTable } from './type-table';
 
 const VERSION = 2;
@@ -13,24 +14,11 @@ export class Module {
   private readonly fns: values.constants.Func[] = [];
   private readonly decls: values.constants.Declaration[] = [];
   private readonly globals: values.Global[] = [];
-  private readonly writer: BitStream = new BitStream();
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeTable: TypeTable = new TypeTable();
+  private readonly strtab: Strtab = new Strtab();
 
   constructor(public readonly sourceName?: string) {
-    this.writer.enterBlock(BLOCK_ID.MODULE, MODULE_ABBR_ID_WIDTH);
-    this.writer.writeUnabbrRecord(MODULE_CODE.VERSION, [ VERSION ]);
-
-    if (sourceName !== undefined) {
-      const arr = Array.from(Buffer.from(sourceName));
-
-      // TODO(indutny): use char6, or fixed7 if compatible
-      this.writer.defineAbbr(new Abbr('filename', [
-        Abbr.literal(MODULE_CODE.SOURCE_FILENAME),
-        Abbr.array(Abbr.fixed(8)),
-      ]));
-      this.writer.writeRecord('filename', [ arr ]);
-    }
   }
 
   public addFunction(fn: values.constants.Func): void {
@@ -46,7 +34,21 @@ export class Module {
   }
 
   public build(): Buffer {
-    // TODO(indutny): prevent double-invocation
+    const writer: BitStream = new BitStream();
+
+    writer.enterBlock(BLOCK_ID.MODULE, MODULE_ABBR_ID_WIDTH);
+    writer.writeUnabbrRecord(MODULE_CODE.VERSION, [ VERSION ]);
+
+    if (this.sourceName !== undefined) {
+      const arr = Array.from(Buffer.from(this.sourceName));
+
+      // TODO(indutny): use char6, or fixed7 if compatible
+      writer.defineAbbr(new Abbr('filename', [
+        Abbr.literal(MODULE_CODE.SOURCE_FILENAME),
+        Abbr.array(Abbr.fixed(8)),
+      ]));
+      writer.writeRecord('filename', [ arr ]);
+    }
 
     // LLVM enumerates values in specific order, attach id to each before
     // emitting binary data
@@ -61,10 +63,15 @@ export class Module {
       this.typeTable.add(value.ty);
     }
 
-    this.typeTable.build(this.writer);
+    this.typeTable.build(writer);
 
-    this.writer.endBlock();
-    return this.writer.end();
+    this.buildGlobals(writer);
+
+    // Build STRTAB last, when we've added all strings to it
+    this.strtab.build(writer);
+
+    writer.endBlock();
+    return writer.end();
   }
 
   // Convenience methods
@@ -85,5 +92,17 @@ export class Module {
       throw new Error('Unexpected value type: ' + value.constructor.name);
     }
     return this;
+  }
+
+  // Private API
+
+  private buildGlobals(writer: BitStream): void {
+    writer.defineAbbr(new Abbr('global', [
+      Abbr.literal(MODULE_CODE.GLOBALVAR),
+    ]));
+
+    for (const g of this.globals) {
+      const name = this.strtab.add(g.name);
+    }
   }
 }

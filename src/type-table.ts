@@ -47,8 +47,7 @@ export class TypeTable {
     const key = ty.typeString;
     assert(this.map.has(key), `Type: "${key}" not found`);
 
-    // Index should start from one
-    return (this.map.get(key) as number) + 1;
+    return (this.map.get(key) as number);
   }
 
   public build(writer: BitStream): void {

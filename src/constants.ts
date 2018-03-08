@@ -1,9 +1,11 @@
 export const BLOCK_ID = {
   MODULE: 8,
+  STRTAB: 23,
   TYPE: 17,
 };
 
 export const MODULE_CODE = {
+  GLOBALVAR: 7,
   SOURCE_FILENAME: 16,
   VERSION: 1,
 };
@@ -29,4 +31,8 @@ export const TYPE_CODE = {
   VOID: 2,
   X86_FP80: 13,
   X86_MMX: 17,
+};
+
+export const STRTAB_CODE = {
+  BLOB: 1,
 };
