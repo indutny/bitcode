@@ -1,4 +1,6 @@
-import { Builder, Linkage, values } from 'bitcode-builder';
+import * as assert from 'assert';
+
+import { Builder, CallingConv, Linkage, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream } from './bitstream';
@@ -19,6 +21,7 @@ export class Module {
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeTable: TypeTable = new TypeTable();
   private readonly strtab: Strtab = new Strtab();
+  private lastValueIndex: number = 0;
 
   constructor(public readonly sourceName?: string) {
   }
@@ -68,6 +71,7 @@ export class Module {
     this.typeTable.build(writer);
 
     this.buildGlobals(writer);
+    this.buildDeclarations(writer);
 
     writer.endBlock();
 
@@ -124,6 +128,8 @@ export class Module {
     for (const g of this.globals) {
       const name = this.strtab.add(g.name);
 
+      this.checkValueOrder(g);
+
       writer.writeRecord('global', [
         name.offset,
         name.length,
@@ -137,6 +143,62 @@ export class Module {
       ]);
     }
   }
+
+  private buildDeclarations(writer: BitStream): void {
+    writer.defineAbbr(new Abbr('decl', [
+      Abbr.literal(MODULE_CODE.FUNCTION),
+      Abbr.vbr(VBR.STRTAB_OFFSET),
+      Abbr.vbr(VBR.STRTAB_LENGTH),
+      Abbr.vbr(VBR.TYPE_INDEX),
+      Abbr.vbr(VBR.CCONV),
+      Abbr.fixed(FIXED.BOOL), // isDeclaration
+      Abbr.fixed(FIXED.LINKAGE),
+      Abbr.vbr(VBR.ATTR_INDEX),
+      Abbr.vbr(VBR.ALIGNMENT),
+      Abbr.literal(0),  // section
+      Abbr.fixed(FIXED.VISIBILITY),
+      Abbr.literal(0),  // has GC
+      Abbr.literal(UNNAMED_ADDR.NO),  // unnamed_addr
+      Abbr.literal(0),  // prologue
+      Abbr.literal(0),  // dllstorageclass
+      Abbr.literal(0),  // comdat
+      Abbr.literal(0),  // personality
+      Abbr.fixed(FIXED.BOOL),  // dso_local
+    ]));
+
+    const decls =
+      (this.fns as values.constants.Declaration[]).concat(this.decls);
+    for (const decl of decls) {
+      const name = this.strtab.add(decl.name);
+
+      this.checkValueOrder(decl);
+
+      writer.writeRecord('decl', [
+        name.offset,
+        name.length,
+        this.typeTable.get(decl.ty),
+        this.encodeCConv(decl.cconv),
+        decl.isFunction() ? 0 : 1,  // isDeclaration
+        this.encodeLinkage(decl.linkage),
+        0,  // TODO(indutny): attributes
+        0,  // TODO(indutny): alignment
+        VISIBILITY.DEFAULT,
+
+        // dso_local
+        (decl.linkage === 'private' || decl.linkage === 'internal') ? 1 : 0,
+      ]);
+    }
+  }
+
+  // Ensure that values are emitted in the same order they were enumerated
+  private checkValueOrder(value: values.Value): void {
+    const index = this.enumerator.get(value);
+    assert(index === this.lastValueIndex || index === this.lastValueIndex + 1,
+      'Invalid order of values (internal error)');
+    this.lastValueIndex = index;
+  }
+
+  // TODO(indutny): move to utils?
 
   private encodeLinkage(linkage: Linkage): number {
     switch (linkage) {
@@ -154,6 +216,26 @@ export class Module {
       case 'linkonce_odr': return 11;
       case 'available_externally': return 12;
       default: throw new Error(`Unsupported linkage type: "${linkage}"`);
+    }
+  }
+
+  private encodeCConv(cconv: CallingConv): number {
+    switch (cconv) {
+      case 'ccc': return 0;
+      case 'fastcc': return 8;
+      case 'coldcc': return 9;
+      case 'webkit_jscc': return 12;
+      case 'anyregcc': return 13;
+      case 'preserve_mostcc': return 14;
+      case 'preserve_allcc': return 15;
+      case 'swiftcc': return 16;
+      case 'cxx_fast_tlscc': return 17;
+      case 'x86_stdcallcc': return 64;
+      case 'x86_fastcallcc': return 65;
+      case 'arm_apcscc': return 66;
+      case 'arm_aapcscc': return 67;
+      case 'arm_aapcs_vfpcc': return 6;
+      default: throw new Error(`Unsupported cconv: "${cconv}"`);
     }
   }
 }

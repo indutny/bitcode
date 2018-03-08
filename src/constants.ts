@@ -5,6 +5,7 @@ export const BLOCK_ID = {
 };
 
 export const MODULE_CODE = {
+  FUNCTION: 8,
   GLOBALVAR: 7,
   SOURCE_FILENAME: 16,
   VERSION: 1,
@@ -48,6 +49,7 @@ export const VBR = {
   ALIGNMENT: 3,
   ARRAY_LENGTH: 8,
   ATTR_INDEX: 6,
+  CCONV: 5,
   INT_WIDTH: 8,
   STRTAB_LENGTH: 6,
   STRTAB_OFFSET: 8,
