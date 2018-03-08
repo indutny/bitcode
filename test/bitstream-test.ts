@@ -48,6 +48,17 @@ describe('bitcode/bitstream', () => {
     check(b, '211000000400000091600000010000000000000000000000');
   });
 
+  it('should write record without abbreviation', () => {
+    b.enterBlock(8, 4);
+
+    // SOURCE
+    b.writeUnabbrRecord(16, [ 1, 2, 3, 4, 5 ]);
+
+    b.endBlock();
+
+    check(b, '21100000020000000315813010050000');
+  });
+
   it('should define and use abbreviation', () => {
     const a = new Abbr('source', [
       Abbr.literal(16), Abbr.array(Abbr.char6()),
