@@ -44,7 +44,7 @@ export class ByteWriter {
 
     // Just one byte available
     this.writeByte(value & 0xff);
-    this.writeByte((value >> 8) & 0xff);
+    this.writeByte((value >>> 8) & 0xff);
 
     return this;
   }
@@ -61,7 +61,7 @@ export class ByteWriter {
 
     // Less than four bytes available
     this.writeWord(value & 0xffff);
-    this.writeWord((value >> 16) & 0xffff);
+    this.writeWord((value >>> 16) & 0xffff);
 
     return this;
   }

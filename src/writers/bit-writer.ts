@@ -37,13 +37,13 @@ export class BitWriter {
     if (fits === 32) {
       mask = 0xffffffff;
     } else {
-      mask = ((1 << fits) >> 0) - 1;
+      mask = ((1 << fits) >>> 0) - 1;
     }
 
     // Split on boundary
     if (fits < width) {
       this.writeBits(value & mask, fits);
-      this.writeBits(value >> fits, width - fits);
+      this.writeBits(value >>> fits, width - fits);
       return this;
     }
 
@@ -106,7 +106,7 @@ export class BitWriter {
     this.align(BYTE_BITS);
     if (this.dwordOff === BYTE_BITS + WORD_BITS) {
       this.writer.writeByte(this.dword & 0xff);
-      this.writer.writeWord(this.dword >> 8);
+      this.writer.writeWord(this.dword >>> 8);
     } else if (this.dwordOff === WORD_BITS) {
       this.writer.writeWord(this.dword);
     } else if (this.dwordOff === BYTE_BITS) {

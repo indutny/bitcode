@@ -30,7 +30,7 @@ export class BitStream {
   private readonly writer: BitWriter = new BitWriter();
   private readonly stack: IStackElem[] = [];
 
-  constructor(private readonly globalAbbrs: ReadonlyArray<Abbr>) {
+  constructor(private readonly globalAbbrs: ReadonlyArray<Abbr> = []) {
     this.writeDWord(MAGIC);
 
     if (globalAbbrs.length !== 0) {
@@ -95,7 +95,7 @@ export class BitStream {
     const vbr = (1 << valueBits) >> 0;
 
     while (num > mask) {
-      const left = num >> valueBits;
+      const left = num >>> valueBits;
       this.writeBits((vbr | (num & mask)), width);
       num = left;
     }
@@ -144,14 +144,14 @@ export class BitStream {
     const vbr = (1 << valueBits) >> 0;
 
     while (hi !== 0) {
-      const left = ((hi & mask) << (32 - valueBits)) | (lo >> valueBits);
+      const left = ((hi & mask) << (32 - valueBits)) | (lo >>> valueBits);
       if (left === 0) {
         break;
       }
 
       this.writeBits((vbr | (lo & mask)), width);
       lo = left;
-      hi >>= valueBits;
+      hi >>>= valueBits;
     }
 
     this.writeVBR(lo, width);
