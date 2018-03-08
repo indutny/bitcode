@@ -7,24 +7,43 @@ export interface IEnumeratorInput {
   globals: ReadonlyArray<values.Global>;
 }
 
+enum EnumerateMode {
+  ALL,
+  CONSTANTS_ONLY,
+}
+
 export class Enumerator {
   private map: Map<values.Value, number> = new Map();
-  private index: number = 0;
+  private index: number = 1;
+  private globalConstants: values.constants.Constant[] = [];
 
   public enumerate(input: IEnumeratorInput): void {
+    // 1. Enumerate globals
     for (const g of input.globals) {
-      if (g.init) {
-        this.enumerateConst(g.init);
-      }
       this.enumerateValue(g);
     }
 
-    for (const fn of input.fns) {
-      this.enumerateFunction(fn);
+    // 2. Their initialization values
+    for (const g of input.globals) {
+      if (g.init) {
+        this.enumerateConst(g.init);
+        this.globalConstants.push(g.init);
+      }
     }
 
+    // 3. Enumerate functions
+    for (const fn of input.fns) {
+      this.enumerateDeclaration(fn);
+    }
+
+    // 4. Enumerate declarations
     for (const decl of input.decls) {
       this.enumerateDeclaration(decl);
+    }
+
+    // 5. Enumerate function bodies
+    for (const fn of input.fns) {
+      this.enumerateFunction(fn);
     }
   }
 
@@ -37,10 +56,19 @@ export class Enumerator {
     yield* this.map.keys();
   }
 
+  public getGlobalConstants(): ReadonlyArray<values.constants.Constant> {
+    return this.globalConstants;
+  }
+
   // Private API
 
-  private enumerateValue(value: values.Value): void {
+  private enumerateValue(value: values.Value,
+                         mode: EnumerateMode = EnumerateMode.ALL): void {
     if (this.map.has(value)) {
+      return;
+    }
+
+    if (mode === EnumerateMode.CONSTANTS_ONLY && !value.isConstant()) {
       return;
     }
 
@@ -61,14 +89,17 @@ export class Enumerator {
   }
 
   private enumerateFunction(fn: values.constants.Func): void {
-    this.enumerateValue(fn);
+    // Enumerate function constants first
+    for (const bb of fn) {
+      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY);
+    }
 
     for (const arg of fn.args) {
       this.enumerateValue(arg);
     }
 
     for (const bb of fn) {
-      this.enumerateBlock(bb);
+      this.enumerateBlock(bb, EnumerateMode.ALL);
     }
   }
 
@@ -77,13 +108,15 @@ export class Enumerator {
     this.enumerateValue(fn);
   }
 
-  private enumerateBlock(bb: values.BasicBlock): void {
+  private enumerateBlock(bb: values.BasicBlock,
+                         mode: EnumerateMode): void {
     for (const instr of bb) {
+      // All operands, except constants should be already enumerated
       for (const operand of instr) {
-        this.enumerateValue(operand);
+        this.enumerateValue(operand, EnumerateMode.CONSTANTS_ONLY);
       }
 
-      this.enumerateValue(instr);
+      this.enumerateValue(instr, mode);
     }
   }
 }

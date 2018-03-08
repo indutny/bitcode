@@ -19,7 +19,7 @@ describe('bitcode/compiler', () => {
       fn.getArgument('param2'));
     fn.body.ret(sum);
 
-    const glob = b.global(b.i(8).ptr(), 'some_global', b.i(8).val(1));
+    const glob = b.global(b.i(8).ptr(), 'some_global', b.i(8).val(0xffffffff));
     glob.markConstant();
 
     m.add(fn);

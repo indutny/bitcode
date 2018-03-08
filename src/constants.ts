@@ -1,4 +1,5 @@
 export const BLOCK_ID = {
+  CONSTANTS: 11,
   MODULE: 8,
   STRTAB: 23,
   TYPE: 17,
@@ -38,6 +39,20 @@ export const STRTAB_CODE = {
   BLOB: 1,
 };
 
+export const CONSTANTS_CODE = {
+  AGGREGATE: 7,
+  BLOCKADDRESS: 21,
+  CSTRING: 9,
+  DATA: 22,
+  FLOAT: 6,
+  INTEGER: 4,
+  NULL: 2,
+  SETTYPE: 1,
+  STRING: 8,
+  UNDEF: 3,
+  WIDE_INTEGER: 5,
+};
+
 export const FIXED = {
   BOOL: 1,
   CHAR: 8,
@@ -50,6 +65,7 @@ export const VBR = {
   ARRAY_LENGTH: 8,
   ATTR_INDEX: 6,
   CCONV: 5,
+  INTEGER: 8,
   INT_WIDTH: 8,
   STRTAB_LENGTH: 6,
   STRTAB_OFFSET: 8,

@@ -1,11 +1,11 @@
 import * as assert from 'assert';
 
-import { Builder, CallingConv, Linkage, values } from 'bitcode-builder';
+import { Builder, CallingConv, Linkage, types, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream } from './bitstream';
 import {
-  BLOCK_ID, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
+  BLOCK_ID, CONSTANTS_CODE, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
 } from './constants';
 import { Enumerator } from './enumerator';
 import { Strtab } from './strtab';
@@ -13,6 +13,7 @@ import { TypeTable } from './type-table';
 
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
+const CONSTANTS_ABBR_ID_WIDTH = 5;
 
 export class Module {
   private readonly fns: values.constants.Func[] = [];
@@ -44,6 +45,8 @@ export class Module {
     writer.enterBlock(BLOCK_ID.MODULE, MODULE_ABBR_ID_WIDTH);
     writer.writeUnabbrRecord(MODULE_CODE.VERSION, [ VERSION ]);
 
+    this.defineBlockInfo(writer);
+
     if (this.sourceName !== undefined) {
       const arr = Array.from(Buffer.from(this.sourceName));
 
@@ -71,6 +74,7 @@ export class Module {
     this.typeTable.build(writer);
 
     this.buildGlobals(writer);
+    this.buildConstants(writer, this.enumerator.getGlobalConstants());
     this.buildDeclarations(writer);
 
     writer.endBlock();
@@ -102,6 +106,29 @@ export class Module {
   }
 
   // Private API
+
+  private defineBlockInfo(writer: BitStream): void {
+    const info: Map<number, Abbr[]> = new Map();
+
+    info.set(BLOCK_ID.CONSTANTS, [
+      new Abbr('settype', [
+        Abbr.literal(CONSTANTS_CODE.SETTYPE),
+        Abbr.vbr(VBR.TYPE_INDEX),
+      ]),
+      new Abbr('int', [
+        Abbr.literal(CONSTANTS_CODE.INTEGER),
+        Abbr.vbr(VBR.INTEGER),
+      ]),
+      new Abbr('null', [
+        Abbr.literal(CONSTANTS_CODE.NULL),
+      ]),
+      new Abbr('undef', [
+        Abbr.literal(CONSTANTS_CODE.UNDEF),
+      ]),
+    ]);
+
+    writer.writeBlockInfo(info);
+  }
 
   // TODO(indutny): support section, alignment, etc
   private buildGlobals(writer: BitStream): void {
@@ -135,13 +162,41 @@ export class Module {
         name.length,
         this.typeTable.get(g.ty),
         g.isConstant() ? 1 : 0,
-        0,
+        g.init === undefined ? 0 : this.enumerator.get(g.init),
         this.encodeLinkage(g.linkage),
         0,  // alignment
         VISIBILITY.DEFAULT,
         0,  // TODO(indutny): attributes
       ]);
     }
+  }
+
+  private buildConstants(writer: BitStream,
+                         list: ReadonlyArray<values.constants.Constant>): void {
+    writer.enterBlock(BLOCK_ID.CONSTANTS, CONSTANTS_ABBR_ID_WIDTH);
+    let lastType: types.Type | undefined;
+    for (const c of this.enumerator.getGlobalConstants()) {
+      if (lastType !== c.ty) {
+        writer.writeRecord('settype', [ this.typeTable.get(c.ty) ]);
+        lastType = c.ty;
+      }
+
+      this.checkValueOrder(c);
+
+      if (c.isInt()) {
+        writer.writeRecord('int', [ this.encodeSigned(c.toInt().value) ]);
+      } else if (c.isNull()) {
+        writer.writeRecord('null', []);
+      } else if (c.isUndef()) {
+        writer.writeRecord('undef', []);
+      } else if (c.isMetadata()) {
+        // TODO(indutny): emit metadata, but not here
+      } else {
+        // TODO(indutny): arrays, structs
+        throw new Error('Constant encoding not implemented yet');
+      }
+    }
+    writer.endBlock();
   }
 
   private buildDeclarations(writer: BitStream): void {
@@ -236,6 +291,17 @@ export class Module {
       case 'arm_aapcscc': return 67;
       case 'arm_aapcs_vfpcc': return 6;
       default: throw new Error(`Unsupported cconv: "${cconv}"`);
+    }
+  }
+
+  // TODO(indutny): int64 support
+  private encodeSigned(value: number): number {
+    value |= 0;
+
+    if (value < 0) {
+      return (-value << 1) | 1;
+    } else {
+      return value << 1;
     }
   }
 }
