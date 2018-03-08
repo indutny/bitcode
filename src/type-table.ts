@@ -49,6 +49,7 @@ export class TypeTable {
 
   public build(writer: BitStream): void {
     writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
+    writer.writeUnabbrRecord(TYPE_CODE.NUMENTRY, [ this.list.length ]);
     for (const ty of this.list) {
       this.write(writer, ty);
     }
