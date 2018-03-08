@@ -25,5 +25,6 @@ describe('bitcode/compiler', () => {
     m.add(glob);
 
     const bc = m.build();
+    require('fs').writeFileSync('/tmp/1.bc', bc);
   });
 });

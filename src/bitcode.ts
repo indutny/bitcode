@@ -13,7 +13,7 @@ export class Module {
   private readonly decls: values.constants.Declaration[] = [];
   private readonly globals: values.Global[] = [];
   private readonly writer: BitStream = new BitStream();
-  private readonly typeTable: TypeTable = new TypeTable(this.writer);
+  private readonly typeTable: TypeTable = new TypeTable();
 
   constructor(public readonly sourceName?: string) {
     this.writer.enterBlock(BLOCK_ID.MODULE, MODULE_ABBR_ID_WIDTH);
@@ -47,6 +47,8 @@ export class Module {
       fns: this.fns,
       globals: this.globals,
     });
+
+    this.typeTable.build(this.writer);
 
     this.writer.endBlock();
     return this.writer.end();

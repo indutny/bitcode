@@ -12,11 +12,7 @@ export class TypeTable {
   // typeString => index in `list`
   private readonly map: Map<string, number> = new Map();
 
-  constructor(private readonly writer: BitStream) {
-    this.writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
-  }
-
-  public write(ty: types.Type): number {
+  public add(ty: types.Type): number {
     const key = ty.typeString;
     if (this.map.has(ty.typeString)) {
       const cachedIndex = this.map.get(ty.typeString)!;
@@ -29,31 +25,19 @@ export class TypeTable {
 
     // Add sub-types first
     if (ty.isArray()) {
-      this.writeArray(ty.toArray());
-    } else if (ty.isInt()) {
-      this.writeInt(ty.toInt());
-    } else if (ty.isLabel()) {
-      this.writeLabel(ty.toLabel());
+      this.add(ty.toArray().elemType);
     } else if (ty.isPointer()) {
-      this.writePointer(ty.toPointer());
+      this.add(ty.toPointer().to);
     } else if (ty.isSignature()) {
-      this.writeSignature(ty.toSignature());
+      this.addSignature(ty.toSignature());
     } else if (ty.isStruct()) {
-      this.writeStruct(ty.toStruct());
-    } else if (ty.isVoid()) {
-      this.writeVoid(ty.toVoid());
-    } else {
-      throw new Error(`Unsupported type: "${key}"`);
+      this.addStruct(ty.toStruct());
     }
 
     const index = this.list.length;
     this.list.push(ty);
     this.map.set(key, index);
     return index;
-  }
-
-  public end(): void {
-    this.writer.endBlock();
   }
 
   public get(ty: types.Type): number {
@@ -63,40 +47,82 @@ export class TypeTable {
     return this.map.get(key) as number;
   }
 
-  // Private
+  public build(writer: BitStream): void {
+    writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
+    for (const ty of this.list) {
+      this.write(writer, ty);
+    }
+    writer.endBlock();
+  }
 
-  private writeArray(ty: types.Array): void {
+  // Private API
+
+  private addSignature(sig: types.Signature): void {
+    this.add(sig.returnType);
+    for (const param of sig.params) {
+      this.add(param);
+    }
+  }
+
+  private addStruct(struct: types.Struct): void {
+    for (const field of struct.fields) {
+      this.add(field.ty);
+    }
+  }
+
+  private write(writer: BitStream, ty: types.Type): void {
+    // Add sub-types first
+    if (ty.isArray()) {
+      this.writeArray(writer, ty.toArray());
+    } else if (ty.isInt()) {
+      this.writeInt(writer, ty.toInt());
+    } else if (ty.isLabel()) {
+      this.writeLabel(writer, ty.toLabel());
+    } else if (ty.isPointer()) {
+      this.writePointer(writer, ty.toPointer());
+    } else if (ty.isSignature()) {
+      this.writeSignature(writer, ty.toSignature());
+    } else if (ty.isStruct()) {
+      this.writeStruct(writer, ty.toStruct());
+    } else if (ty.isVoid()) {
+      this.writeVoid(writer, ty.toVoid());
+    } else {
+      throw new Error(`Unsupported type: "${ty.typeString}"`);
+    }
+  }
+
+  private writeArray(writer: BitStream, ty: types.Array): void {
     // implement me
   }
 
-  private writeInt(ty: types.Int): void {
-    if (!this.writer.hasAbbr('int')) {
-      this.writer.defineAbbr(new Abbr('int', [
+  private writeInt(writer: BitStream, ty: types.Int): void {
+    if (!writer.hasAbbr('int')) {
+      writer.defineAbbr(new Abbr('int', [
         Abbr.literal(TYPE_CODE.INTEGER),
         Abbr.vbr(8),
       ]));
     }
 
-    this.writer.writeRecord('int', [ ty.width ]);
+    writer.writeRecord('int', [ ty.width ]);
   }
 
-  private writeLabel(ty: types.Label): void {
+  private writeLabel(writer: BitStream, ty: types.Label): void {
     // implement me
   }
 
-  private writePointer(ty: types.Pointer): void {
+  private writePointer(writer: BitStream, ty: types.Pointer): void {
     // implement me
   }
 
-  private writeSignature(ty: types.Signature): void {
+  private writeSignature(writer: BitStream, ty: types.Signature): void {
     // implement me
   }
 
-  private writeStruct(ty: types.Struct): void {
+  private writeStruct(writer: BitStream, ty: types.Struct): void {
     // implement me
   }
 
-  private writeVoid(ty: types.Void): void {
+  private writeVoid(writer: BitStream, ty: types.Void): void {
     // implement me
   }
 }
