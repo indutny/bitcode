@@ -63,4 +63,21 @@ describe('bitcode/bitstream', () => {
 
     check(b, '2110000004000000324218d27210cbe2fc96132d03000000');
   });
+
+  it('should write BLOCKINFO', () => {
+    b.enterBlock(8, 4);
+
+    const a = new Abbr('source', [
+      Abbr.literal(16), Abbr.array(Abbr.char6()),
+    ]);
+
+    const info = new Map();
+    info.set(17, [ a ]);
+
+    b.writeBlockInfo(info);
+
+    b.endBlock();
+
+    check(b, '211000000500000001200000020000000741e4086108000000000000');
+  });
 });

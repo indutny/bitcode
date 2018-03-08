@@ -10,12 +10,17 @@ const MAGIC = 0xdec04342;
 const ROOT_ABBR_ID_WIDTH = 2;
 const BLOCK_ID_WIDTH = 8;
 const NEW_ABBR_ID_WIDTH_WIDTH = 4;
+const CODE_WIDTH = 6;
+const NUM_OPS_WIDTH = 6;
+const OP_WIDTH = 6;
 
 const END_BLOCK = 0;
 const ENTER_SUBBLOCK = 1;
 const DEFINE_ABBREV = 2;
+const UNABBREV_RECORD = 3;
 
 const BLOCKINFO = 0;
+const SETBID = 1;
 
 const DWORD_BITS = 32;
 const DWORD_BYTES = 4;
@@ -30,12 +35,11 @@ export class BitStream {
   private readonly writer: BitWriter = new BitWriter();
   private readonly stack: IStackElem[] = [];
 
-  constructor(private readonly globalAbbrs: ReadonlyArray<Abbr> = []) {
-    this.writeDWord(MAGIC);
+  // block id => abbreviations
+  private blockInfo: Map<number, Abbr[]> = new Map();
 
-    if (globalAbbrs.length !== 0) {
-      this.writeBlockInfo();
-    }
+  constructor() {
+    this.writeDWord(MAGIC);
   }
 
   public enterBlock(id: number, abbrIDWidth: number): BitStream {
@@ -47,8 +51,10 @@ export class BitStream {
     const length = this.writer.reserve(DWORD_BITS);
     const offset = this.writer.offset;
 
+    const globalAbbrs = this.blockInfo.get(id) || [];
+
     this.stack.push({
-      block: new Block(id, abbrIDWidth, this.globalAbbrs),
+      block: new Block(id, abbrIDWidth, globalAbbrs),
       length,
       offset,
     });
@@ -65,6 +71,33 @@ export class BitStream {
 
     const computedLen = (this.writer.offset - elem.offset) / DWORD_BYTES;
     elem.length.writeUInt32LE(computedLen, 0);
+
+    return this;
+  }
+
+  public writeBlockInfo(map: Map<number, Abbr[]>): BitStream {
+    if (map.size === 0) {
+      return this;
+    }
+
+    assert.strictEqual(this.blockInfo.size, 0,
+      'BLOCKINFO can be written only once');
+
+    map.forEach((abbrs, id) => {
+      assert(typeof id === 'number', 'BLOCKINFO must have numeric block ids');
+      this.blockInfo.set(id, abbrs);
+    });
+
+    this.enterBlock(BLOCKINFO, ROOT_ABBR_ID_WIDTH);
+
+    map.forEach((abbrs, id) => {
+      this.writeUnabbrRecord(SETBID, [ id ]);
+      for (const abbr of abbrs) {
+        this.defineAbbr(abbr);
+      }
+    });
+
+    this.endBlock();
 
     return this;
   }
@@ -92,6 +125,18 @@ export class BitStream {
 
     this.writeAbbrID(entry.index);
     entry.abbr.write(this, values);
+
+    return this;
+  }
+
+  public writeUnabbrRecord(code: number, values: ReadonlyArray<VBRValue>)
+    : BitStream {
+    this.writeAbbrID(UNABBREV_RECORD);
+    this.writeVBR(code, CODE_WIDTH);
+    this.writeVBR(values.length, NUM_OPS_WIDTH);
+    for (const value of values) {
+      this.writeVBR(value, OP_WIDTH);
+    }
 
     return this;
   }
@@ -186,13 +231,5 @@ export class BitStream {
 
     assert(0 <= id && id < (1 << width), 'Abbreviation ID doesn\'t fit');
     this.writeBits(id, width);
-  }
-
-  private writeBlockInfo(): void {
-    this.enterBlock(BLOCKINFO, ROOT_ABBR_ID_WIDTH);
-    for (const abbr of this.globalAbbrs) {
-      this.defineAbbr(abbr);
-    }
-    this.endBlock();
   }
 }
