@@ -13,6 +13,7 @@ export class Module {
   private readonly decls: values.constants.Declaration[] = [];
   private readonly globals: values.Global[] = [];
   private readonly writer: BitStream = new BitStream();
+  private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeTable: TypeTable = new TypeTable();
 
   constructor(public readonly sourceName?: string) {
@@ -41,12 +42,16 @@ export class Module {
 
     // LLVM enumerates values in specific order, attach id to each before
     // emitting binary data
-    const e = new Enumerator();
-    e.enumerate({
+    this.enumerator.enumerate({
       decls: this.decls,
       fns: this.fns,
       globals: this.globals,
     });
+
+    // Add types from used values
+    for (const value of this.enumerator) {
+      this.typeTable.add(value.ty);
+    }
 
     this.typeTable.build(this.writer);
 

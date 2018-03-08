@@ -5,14 +5,18 @@ import { Abbr, BitStream } from './bitstream';
 import { BLOCK_ID, TYPE_CODE } from './constants';
 
 const TYPE_ABBR_ID_WIDTH = 4;
+const TYPE_REF_WIDTH = 8;
 
 export class TypeTable {
   private readonly list: types.Type[] = [];
+  private isBuilt: boolean = false;
 
   // typeString => index in `list`
   private readonly map: Map<string, number> = new Map();
 
-  public add(ty: types.Type): number {
+  public add(ty: types.Type): void {
+    assert(!this.isBuilt, 'TypeTable already built');
+
     const key = ty.typeString;
     if (this.map.has(ty.typeString)) {
       const cachedIndex = this.map.get(ty.typeString)!;
@@ -20,7 +24,7 @@ export class TypeTable {
 
       // Sanity check, types must be compatible
       assert(stored.isEqual(ty), `Incompatible types for: "${key}"`);
-      return cachedIndex;
+      return;
     }
 
     // Add sub-types first
@@ -37,17 +41,20 @@ export class TypeTable {
     const index = this.list.length;
     this.list.push(ty);
     this.map.set(key, index);
-    return index;
   }
 
   public get(ty: types.Type): number {
     const key = ty.typeString;
     assert(this.map.has(key), `Type: "${key}" not found`);
 
-    return this.map.get(key) as number;
+    // Index should start from one
+    return (this.map.get(key) as number) + 1;
   }
 
   public build(writer: BitStream): void {
+    assert(!this.isBuilt, 'TypeTable already built');
+    this.isBuilt = true;
+
     writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
     writer.writeUnabbrRecord(TYPE_CODE.NUMENTRY, [ this.list.length ]);
     for (const ty of this.list) {
@@ -93,7 +100,15 @@ export class TypeTable {
   }
 
   private writeArray(writer: BitStream, ty: types.Array): void {
-    // implement me
+    if (!writer.hasAbbr('array')) {
+      writer.defineAbbr(new Abbr('array', [
+        Abbr.literal(TYPE_CODE.ARRAY),
+        Abbr.vbr(6),
+        Abbr.vbr(TYPE_REF_WIDTH),
+      ]));
+    }
+
+    writer.writeRecord('array', [ ty.length, this.get(ty.elemType) ]);
   }
 
   private writeInt(writer: BitStream, ty: types.Int): void {
@@ -108,15 +123,26 @@ export class TypeTable {
   }
 
   private writeLabel(writer: BitStream, ty: types.Label): void {
-    // implement me
+    writer.writeUnabbrRecord(TYPE_CODE.LABEL, []);
   }
 
   private writePointer(writer: BitStream, ty: types.Pointer): void {
-    // implement me
+    if (!writer.hasAbbr('ptr')) {
+      writer.defineAbbr(new Abbr('ptr', [
+        Abbr.literal(TYPE_CODE.POINTER),
+        Abbr.vbr(TYPE_REF_WIDTH),
+      ]));
+    }
+
+    writer.writeRecord('ptr', [ this.get(ty.to) ]);
   }
 
+  // TODO(indutny): vararg support
   private writeSignature(writer: BitStream, ty: types.Signature): void {
-    // implement me
+    writer.writeUnabbrRecord(TYPE_CODE.FUNCTION, [
+      0,  // vararg
+      this.get(ty.returnType),
+    ].concat(ty.params.map((p) => this.get(p))));
   }
 
   private writeStruct(writer: BitStream, ty: types.Struct): void {
@@ -124,6 +150,6 @@ export class TypeTable {
   }
 
   private writeVoid(writer: BitStream, ty: types.Void): void {
-    // implement me
+    writer.writeUnabbrRecord(TYPE_CODE.VOID, []);
   }
 }

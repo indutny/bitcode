@@ -33,6 +33,10 @@ export class Enumerator {
     return this.map.get(value)!;
   }
 
+  public *[Symbol.iterator](): Iterator<values.Value> {
+    yield* this.map.keys();
+  }
+
   // Private API
 
   private enumerateValue(value: values.Value): void {
