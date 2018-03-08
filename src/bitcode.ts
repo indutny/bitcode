@@ -2,6 +2,7 @@ import { Builder, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { BitStream } from './bitstream';
+import { MODULE_CODE } from './constants';
 import { Enumerator } from './enumerator';
 
 export class Module {
@@ -11,6 +12,10 @@ export class Module {
   private readonly writer: BitStream = new BitStream();
 
   constructor(public readonly sourceName?: string) {
+    if (sourceName !== undefined) {
+      const bytes = Array.from(Buffer.from(sourceName));
+      this.writer.writeUnabbrRecord(MODULE_CODE.SOURCE_FILENAME, bytes);
+    }
   }
 
   public addFunction(fn: values.Func): void {
