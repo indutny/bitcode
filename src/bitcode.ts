@@ -1,11 +1,12 @@
 import { Builder, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
-import { BitStream } from './bitstream';
+import { Abbr, BitStream } from './bitstream';
 import { BLOCK_ID, MODULE_CODE } from './constants';
 import { Enumerator } from './enumerator';
 import { TypeTable } from './type-table';
 
+const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 
 export class Module {
@@ -18,10 +19,17 @@ export class Module {
 
   constructor(public readonly sourceName?: string) {
     this.writer.enterBlock(BLOCK_ID.MODULE, MODULE_ABBR_ID_WIDTH);
+    this.writer.writeUnabbrRecord(MODULE_CODE.VERSION, [ VERSION ]);
 
     if (sourceName !== undefined) {
-      const bytes = Array.from(Buffer.from(sourceName));
-      this.writer.writeUnabbrRecord(MODULE_CODE.SOURCE_FILENAME, bytes);
+      const arr = Array.from(Buffer.from(sourceName));
+
+      // TODO(indutny): use char6, or fixed7 if compatible
+      this.writer.defineAbbr(new Abbr('filename', [
+        Abbr.literal(MODULE_CODE.SOURCE_FILENAME),
+        Abbr.array(Abbr.fixed(8)),
+      ]));
+      this.writer.writeRecord('filename', [ arr ]);
     }
   }
 

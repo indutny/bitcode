@@ -5,6 +5,7 @@ export const BLOCK_ID = {
 
 export const MODULE_CODE = {
   SOURCE_FILENAME: 16,
+  VERSION: 1,
 };
 
 export const TYPE_CODE = {
