@@ -2,16 +2,19 @@ import * as assert from 'assert';
 
 import { Abbr } from './abbr';
 
+const MIN_ABBR_ID_WIDTH = 2;
+
 export class Block {
   protected abbrList: Abbr[] = [];
 
   // abbr.name => index in `abbrList`
   protected abbrMap: Map<string, number> = new Map();
 
-  constructor(public readonly abbrWidth: number, blockInfo?: Block) {
-    if (blockInfo !== undefined) {
-      blockInfo.abbrList.forEach((abbr) => this.addAbbr(abbr));
-    }
+  constructor(public readonly id: number, public readonly abbrIDWidth: number,
+              globalAbbrs: ReadonlyArray<Abbr>) {
+    assert(MIN_ABBR_ID_WIDTH <= abbrIDWidth, 'AbbrID width is too small');
+
+    globalAbbrs.forEach((abbr) => this.addAbbr(abbr));
   }
 
   public addAbbr(abbr: Abbr): number {

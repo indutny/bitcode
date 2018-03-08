@@ -21,47 +21,47 @@ export class ByteWriter {
 
   public get offset(): number { return this.size + this.chunkOffset; }
 
-  public writeByte(val: number): ByteWriter {
+  public writeByte(value: number): ByteWriter {
     const chunk = this.ensureChunk();
 
     // We have at least one byte here
-    chunk.writeUInt8(val >>> 0, this.chunkOffset);
+    chunk.writeUInt8(value >>> 0, this.chunkOffset);
     this.chunkOffset++;
     this.chunkLeft--;
 
     return this;
   }
 
-  public writeWord(val: number): ByteWriter {
+  public writeWord(value: number): ByteWriter {
     const chunk = this.ensureChunk();
 
     if (this.chunkLeft >= 2) {
-      chunk.writeUInt16LE((val & 0xffff) >>> 0, this.chunkOffset);
+      chunk.writeUInt16LE((value & 0xffff) >>> 0, this.chunkOffset);
       this.chunkLeft -= 2;
       this.chunkOffset += 2;
       return this;
     }
 
     // Just one byte available
-    this.writeByte(val & 0xff);
-    this.writeByte((val >> 8) & 0xff);
+    this.writeByte(value & 0xff);
+    this.writeByte((value >> 8) & 0xff);
 
     return this;
   }
 
-  public writeDWord(val: number): ByteWriter {
+  public writeDWord(value: number): ByteWriter {
     const chunk = this.ensureChunk();
 
     if (this.chunkLeft >= 4) {
-      chunk.writeUInt32LE(val >>> 0, this.chunkOffset);
+      chunk.writeUInt32LE(value >>> 0, this.chunkOffset);
       this.chunkLeft -= 4;
       this.chunkOffset += 4;
       return this;
     }
 
     // Less than four bytes available
-    this.writeWord(val & 0xffff);
-    this.writeWord((val >> 16) & 0xffff);
+    this.writeWord(value & 0xffff);
+    this.writeWord((value >> 16) & 0xffff);
 
     return this;
   }

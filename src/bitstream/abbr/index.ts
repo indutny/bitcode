@@ -7,4 +7,6 @@ import { Literal } from './literal';
 import { Operand } from './operand';
 import { VBR } from './vbr';
 
-export { Abbr, Array, Blob, Char6, Fixed, Literal, Operand, VBR };
+const operands = { Array, Blob, Char6, Fixed, Literal, VBR };
+
+export { Abbr, Operand, operands };

@@ -25,14 +25,14 @@ export class BitWriter {
     return this.offset * BYTE_BITS + this.dwordOff;
   }
 
-  public writeBits(value: number, bits: number): BitWriter {
-    if (bits === 0) {
+  public writeBits(value: number, width: number): BitWriter {
+    if (width === 0) {
       return this;
     }
 
-    assert(0 < bits && bits <= DWORD_BITS, 'Invalid number of bits');
+    assert(0 < width && width <= DWORD_BITS, 'Invalid number of bits');
 
-    const fits = Math.min(this.dwordLeft, bits);
+    const fits = Math.min(this.dwordLeft, width);
     let mask;
     if (fits === 32) {
       mask = 0xffffffff;
@@ -41,15 +41,15 @@ export class BitWriter {
     }
 
     // Split on boundary
-    if (fits < bits) {
+    if (fits < width) {
       this.writeBits(value & mask, fits);
-      this.writeBits(value >> fits, bits - fits);
+      this.writeBits(value >> fits, width - fits);
       return this;
     }
 
     this.dword |= (value & mask) << this.dwordOff;
-    this.dwordOff += bits;
-    this.dwordLeft -= bits;
+    this.dwordOff += width;
+    this.dwordLeft -= width;
 
     // Flush word when it is full
     if (this.dwordLeft === 0) {
@@ -62,16 +62,16 @@ export class BitWriter {
     return this;
   }
 
-  public writeByte(val: number): BitWriter {
-    return this.writeBits(val, BYTE_BITS);
+  public writeByte(value: number): BitWriter {
+    return this.writeBits(value, BYTE_BITS);
   }
 
-  public writeWord(val: number): BitWriter {
-    return this.writeBits(val, WORD_BITS);
+  public writeWord(value: number): BitWriter {
+    return this.writeBits(value, WORD_BITS);
   }
 
-  public writeDWord(val: number): BitWriter {
-    return this.writeBits(val, DWORD_BITS);
+  public writeDWord(value: number): BitWriter {
+    return this.writeBits(value, DWORD_BITS);
   }
 
   public pad(size: number): BitWriter {
@@ -82,12 +82,14 @@ export class BitWriter {
     return this.pad(this.dwordLeft % size);
   }
 
-  public reserve(bytes: number): Buffer {
+  public reserve(width: number): Buffer {
+    assert.strictEqual(width % BYTE_BITS, 0,
+      'Only bytes can be reserved');
     assert.strictEqual(this.dwordOff % BYTE_BITS, 0,
       'Must be aligned before reservation');
     this.flush();
 
-    return this.writer.reserve(bytes);
+    return this.writer.reserve(width / BYTE_BITS);
   }
 
   public end(): Buffer {
