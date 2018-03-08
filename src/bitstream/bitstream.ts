@@ -114,6 +114,13 @@ export class BitStream {
     return this;
   }
 
+  public hasAbbr(abbrName: string): boolean {
+    assert(this.stack.length > 0, 'No blocks to define abbreviation in');
+
+    const block = this.stack[this.stack.length - 1].block;
+    return block.hasAbbr(abbrName);
+  }
+
   public writeRecord(abbrName: string, values: ReadonlyArray<any>): BitStream {
     assert(this.stack.length > 0, 'No blocks to write abbreviation in');
 

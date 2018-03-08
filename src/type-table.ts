@@ -1,7 +1,10 @@
 import * as assert from 'assert';
 import { types } from 'bitcode-builder';
 
-import { BitStream } from './bitstream';
+import { Abbr, BitStream } from './bitstream';
+import { BLOCK_ID, TYPE_CODE } from './constants';
+
+const TYPE_ABBR_ID_WIDTH = 4;
 
 export class TypeTable {
   private readonly list: types.Type[] = [];
@@ -10,6 +13,7 @@ export class TypeTable {
   private readonly map: Map<string, number> = new Map();
 
   constructor(private readonly writer: BitStream) {
+    this.writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
   }
 
   public write(ty: types.Type): number {
@@ -48,6 +52,10 @@ export class TypeTable {
     return index;
   }
 
+  public end(): void {
+    this.writer.endBlock();
+  }
+
   public get(ty: types.Type): number {
     const key = ty.typeString;
     assert(this.map.has(key), `Type: "${key}" not found`);
@@ -62,7 +70,14 @@ export class TypeTable {
   }
 
   private writeInt(ty: types.Int): void {
-    // implement me
+    if (!this.writer.hasAbbr('int')) {
+      this.writer.defineAbbr(new Abbr('int', [
+        Abbr.literal(TYPE_CODE.INTEGER),
+        Abbr.vbr(8),
+      ]));
+    }
+
+    this.writer.writeRecord('int', [ ty.width ]);
   }
 
   private writeLabel(ty: types.Label): void {

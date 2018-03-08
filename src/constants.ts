@@ -1,3 +1,31 @@
+export const BLOCK_ID = {
+  MODULE: 8,
+  TYPE: 17,
+};
+
 export const MODULE_CODE = {
   SOURCE_FILENAME: 16,
+};
+
+export const TYPE_CODE = {
+  ARRAY: 11,
+  DOUBLE: 4,
+  FLOAT: 3,
+  FP128: 14,
+  FUNCTION: 21,
+  HALF: 10,
+  INTEGER: 7,
+  LABEL: 5,
+  METADATA: 16,
+  NUMENTRY: 1,
+  OPAQUE: 6,
+  POINTER: 8,
+  PPC_FP128: 15,
+  STRUCT_ANON: 18,
+  STRUCT_NAME: 19,
+  STRUCT_NAMED: 20,
+  VECTOR: 12,
+  VOID: 2,
+  X86_FP80: 13,
+  X86_MMX: 17,
 };

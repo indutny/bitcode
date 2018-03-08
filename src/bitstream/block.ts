@@ -38,4 +38,8 @@ export class Block {
   public getAbbr(name: string): IAbbrMapEntry | undefined {
     return this.abbrMap.get(name);
   }
+
+  public hasAbbr(name: string): boolean {
+    return this.abbrMap.has(name);
+  }
 }

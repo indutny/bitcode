@@ -2,8 +2,8 @@ import * as assert from 'assert';
 import { values } from 'bitcode-builder';
 
 export interface IEnumeratorInput {
-  decls: ReadonlyArray<values.Declaration>;
-  fns: ReadonlyArray<values.Func>;
+  decls: ReadonlyArray<values.constants.Declaration>;
+  fns: ReadonlyArray<values.constants.Func>;
   globals: ReadonlyArray<values.Global>;
 }
 
@@ -24,7 +24,7 @@ export class Enumerator {
     }
 
     for (const decl of input.decls) {
-      this.enumerateValue(decl);
+      this.enumerateDeclaration(decl);
     }
   }
 
@@ -48,10 +48,15 @@ export class Enumerator {
   }
 
   private enumerateConst(c: values.constants.Constant): void {
+    if (c.isFunction()) {
+      this.enumerateFunction(c.toFunction());
+    } else if (c.isDeclaration()) {
+      this.enumerateDeclaration(c.toDeclaration());
+    }
     this.enumerateValue(c);
   }
 
-  private enumerateFunction(fn: values.Func): void {
+  private enumerateFunction(fn: values.constants.Func): void {
     this.enumerateValue(fn);
 
     for (const arg of fn.args) {
@@ -61,6 +66,11 @@ export class Enumerator {
     for (const bb of fn) {
       this.enumerateBlock(bb);
     }
+  }
+
+  private enumerateDeclaration(fn: values.constants.Declaration): void {
+    // Nothing special, so far
+    this.enumerateValue(fn);
   }
 
   private enumerateBlock(bb: values.BasicBlock): void {
