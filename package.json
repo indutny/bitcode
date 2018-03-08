@@ -28,6 +28,6 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "bitcode-builder": "^1.0.0-beta5"
+    "bitcode-builder": "^1.0.0-beta9"
   }
 }

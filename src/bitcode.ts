@@ -1,10 +1,14 @@
 import { Builder, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
+import { BitStream } from './bitstream';
+import { Enumerator } from './enumerator';
+
 export class Module {
   private readonly fns: values.Func[] = [];
   private readonly decls: values.Declaration[] = [];
   private readonly globals: values.Global[] = [];
+  private readonly writer: BitStream = new BitStream();
 
   constructor(public readonly sourceName?: string) {
   }
@@ -22,7 +26,16 @@ export class Module {
   }
 
   public build(): Buffer {
-    return Buffer.alloc(0);
+    // LLVM enumerates values in specific order, attach id to each before
+    // emitting binary data
+    const e = new Enumerator();
+    e.enumerate({
+      decls: this.decls,
+      fns: this.fns,
+      globals: this.globals,
+    });
+
+    return this.writer.end();
   }
 
   // Convenience methods
