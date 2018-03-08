@@ -145,8 +145,22 @@ export class TypeTable {
     ].concat(ty.params.map((p) => this.get(p))));
   }
 
+  // TODO(indutny): support packed structs
   private writeStruct(writer: BitStream, ty: types.Struct): void {
-    // implement me
+    let code = TYPE_CODE.STRUCT_ANON;
+    if (ty.name !== undefined) {
+      if (!writer.hasAbbr('struct_name')) {
+        writer.defineAbbr(new Abbr('struct_name', [
+          Abbr.literal(TYPE_CODE.STRUCT_NAME),
+          Abbr.array(Abbr.char6()),
+        ]));
+      }
+
+      writer.writeRecord('struct_name', [ ty.name ]);
+      code = TYPE_CODE.STRUCT_NAMED;
+    }
+
+    writer.writeUnabbrRecord(code, ty.fields.map((f) => this.get(f.ty)));
   }
 
   private writeVoid(writer: BitStream, ty: types.Void): void {
