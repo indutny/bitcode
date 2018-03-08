@@ -1,3 +1,4 @@
+import * as assert from 'assert';
 import { values } from 'bitcode-builder';
 
 export interface IEnumeratorInput {
@@ -26,6 +27,13 @@ export class Enumerator {
       this.enumerateValue(decl);
     }
   }
+
+  public get(value: values.Value): number {
+    assert(this.map.has(value), 'Stumbled upon non-enumerated value');
+    return this.map.get(value) as number;
+  }
+
+  // Private API
 
   private enumerateValue(value: values.Value): void {
     if (this.map.has(value)) {
