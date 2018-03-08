@@ -1,5 +1,5 @@
 import { Builder } from 'bitcode-builder';
-import { Module } from '../';
+import { Module } from '../src/bitcode';
 
 describe('bitcode/compiler', () => {
   let m: Module;

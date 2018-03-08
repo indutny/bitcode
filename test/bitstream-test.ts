@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import { BitStream } from '../lib/bitstream';
+import { BitStream } from '../src/bitstream';
 
 describe('bitcode/bitstream', () => {
   let b: BitStream;
@@ -8,28 +8,43 @@ describe('bitcode/bitstream', () => {
     b = new BitStream();
   });
 
+  function check(s: BitStream, expected: string): void {
+    assert.strictEqual(s.end().slice(4).toString('hex'), expected);
+  }
+
   describe('32-bit vbr', () => {
     it('should write short 6-bit vbr', () => {
-      b.writeVBR(0x3, 6);
-      assert.strictEqual(b.end().slice(4).toString('hex'), '03');
+      check(b.writeVBR(0x3, 6), '03');
     });
 
     it('should write long 6-bit vbr', () => {
-      b.writeVBR(0xabba, 6);
-      assert.strictEqual(b.end().slice(4).toString('hex'), '7aaf06');
+      check(b.writeVBR(0xabba, 6), '7aaf06');
     });
   });
 
   describe('64-bit vbr', () => {
     it('should write short 6-bit vbr', () => {
-      b.writeVBR([ 0, 0x3 ], 6);
-      assert.strictEqual(b.end().slice(4).toString('hex'), '03');
+      check(b.writeVBR([ 0, 0x3 ], 6), '03');
     });
 
     it('should write long 6-bit vbr', () => {
-      b.writeVBR([ 0xabbaabba, 0xc0dec0de ], 6);
-      assert.strictEqual(b.end().slice(4).toString('hex'),
-        'be09f72db8de6bedde0a');
+      check(b.writeVBR([ 0xabbaabba, 0xc0dec0de ], 6), 'be09f72db8de6bedde0a');
     });
+  });
+
+  it('should enter and leave blocks', () => {
+    b.enterBlock(8, 2);
+    b.endBlock();
+
+    check(b, '210800000100000000000000');
+  });
+
+  it('should enter and leave subblocks', () => {
+    b.enterBlock(8, 4);
+    b.enterBlock(9, 6);
+    b.endBlock();
+    b.endBlock();
+
+    check(b, '211000000400000091600000010000000000000000000000');
   });
 });
