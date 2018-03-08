@@ -12,10 +12,10 @@ export class Enumerator {
 
   public enumerate(input: IEnumeratorInput): void {
     for (const g of input.globals) {
-      this.enumerateValue(g);
       if (g.init) {
         this.enumerateConst(g.init);
       }
+      this.enumerateValue(g);
     }
 
     for (const fn of input.fns) {
@@ -32,10 +32,11 @@ export class Enumerator {
       return;
     }
 
+    this.map.set(value, this.index);
+
     if (!value.ty.isVoid()) {
       this.index++;
     }
-    this.map.set(value, this.index);
   }
 
   private enumerateConst(c: values.constants.Constant): void {
