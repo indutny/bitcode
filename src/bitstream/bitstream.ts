@@ -70,8 +70,29 @@ export class BitStream {
   }
 
   public defineAbbr(abbr: Abbr): BitStream {
+    assert(this.stack.length > 0, 'No blocks to define abbreviation in');
+
     this.writeAbbrID(DEFINE_ABBREV);
     abbr.writeDefinition(this);
+
+    const block = this.stack[this.stack.length - 1].block;
+    block.addAbbr(abbr);
+
+    return this;
+  }
+
+  public writeRecord(abbrName: string, values: ReadonlyArray<any>): BitStream {
+    assert(this.stack.length > 0, 'No blocks to write abbreviation in');
+
+    const block = this.stack[this.stack.length - 1].block;
+    const entry = block.getAbbr(abbrName);
+    if (entry === undefined) {
+      throw new Error(`No abbreviation with name "${abbrName}" was found`);
+    }
+
+    this.writeAbbrID(entry.index);
+    entry.abbr.write(this, values);
+
     return this;
   }
 

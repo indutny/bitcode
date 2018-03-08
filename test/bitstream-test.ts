@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import { BitStream } from '../src/bitstream';
+import { Abbr, BitStream } from '../src/bitstream';
 
 describe('bitcode/bitstream', () => {
   let b: BitStream;
@@ -46,5 +46,21 @@ describe('bitcode/bitstream', () => {
     b.endBlock();
 
     check(b, '211000000400000091600000010000000000000000000000');
+  });
+
+  it('should define and use abbreviation', () => {
+    const a = new Abbr('source', [
+      Abbr.literal(16), Abbr.array(Abbr.char6()),
+    ]);
+    b.enterBlock(8, 4);
+
+    b.defineAbbr(a);
+
+    // SOURCE
+    b.writeRecord('source', [ 'hello_world' ]);
+
+    b.endBlock();
+
+    check(b, '2110000004000000324218d27210cbe2fc96132d03000000');
   });
 });

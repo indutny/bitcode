@@ -74,12 +74,12 @@ export class BitWriter {
     return this.writeBits(value, DWORD_BITS);
   }
 
-  public pad(size: number): BitWriter {
-    return this.writeBits(0, size);
+  public pad(width: number): BitWriter {
+    return this.writeBits(0, width);
   }
 
-  public align(size: number): BitWriter {
-    return this.pad(this.dwordLeft % size);
+  public align(width: number): BitWriter {
+    return this.pad(this.dwordLeft % width);
   }
 
   public reserve(width: number): Buffer {

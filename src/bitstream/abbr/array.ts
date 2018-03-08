@@ -1,16 +1,20 @@
 import * as assert from 'assert';
 
 import { IWriter } from './abbr';
+import { Blob } from './blob';
 import { Literal } from './literal';
 import { Operand } from './operand';
 
 const LENGTH_WIDTH = 6;
 
 class ArrayOp extends Operand {
-  constructor(public readonly elemType: Operand) {
+  constructor(public readonly elemOp: Operand) {
     super();
 
-    assert(!(elemType instanceof Literal), 'Array elements can\'t be literals');
+    const isDisallowed = elemOp instanceof Literal ||
+      elemOp instanceof Blob ||
+      elemOp instanceof ArrayOp;
+    assert(!isDisallowed, 'Array elements can\'t be literals/arrays/blobs');
   }
 
   public encode(writer: IWriter, value?: any): void {
@@ -20,7 +24,7 @@ class ArrayOp extends Operand {
 
     writer.writeVBR(arrValue.length, LENGTH_WIDTH);
     for (const elem of arrValue) {
-      this.elemType.encode(writer, elem);
+      this.elemOp.encode(writer, elem);
     }
   }
 }

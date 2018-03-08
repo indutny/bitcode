@@ -9,7 +9,8 @@
     "clean": "rm -rf lib",
     "prepare": "npm run clean && npm run build",
     "lint": "tslint -c tslint.json src/*.ts src/**/*.ts src/**/**/*.ts test/*.ts",
-    "test": "mocha -r ts-node/register/type-check --reporter spec test/*-test.ts && npm run lint"
+    "mocha": "mocha -r ts-node/register/type-check --reporter spec test/*-test.ts",
+    "test": "npm run mocha && npm run lint"
   },
   "keywords": [
     "bitcode",
