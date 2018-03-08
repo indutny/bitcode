@@ -1,5 +1,3 @@
-import { Abbr } from './abbr';
-import { BitStream } from './bitstream';
-import { Block } from './block';
-
-export { Abbr, BitStream, Block };
+export { Abbr } from './abbr';
+export { BitStream } from './bitstream';
+export { Block } from './block';

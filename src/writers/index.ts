@@ -1,4 +1,2 @@
-import { BitWriter } from './bit-writer';
-import { ByteWriter } from './byte-writer';
-
-export { BitWriter, ByteWriter };
+export { BitWriter } from './bit-writer';
+export { ByteWriter } from './byte-writer';
