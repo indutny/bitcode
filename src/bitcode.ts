@@ -4,12 +4,14 @@ import { Buffer } from 'buffer';
 import { BitStream } from './bitstream';
 import { MODULE_CODE } from './constants';
 import { Enumerator } from './enumerator';
+import { TypeTable } from './type-table';
 
 export class Module {
   private readonly fns: values.Func[] = [];
   private readonly decls: values.Declaration[] = [];
   private readonly globals: values.Global[] = [];
   private readonly writer: BitStream = new BitStream();
+  private readonly typeTable: TypeTable = new TypeTable(this.writer);
 
   constructor(public readonly sourceName?: string) {
     if (sourceName !== undefined) {
@@ -50,6 +52,7 @@ export class Module {
   }
 
   public add(value: values.Value): Module {
+    // NOTE: test `Func` first since it is a subclass of `Declaration`
     if (value instanceof values.Func) {
       this.addFunction(value);
     } else if (value instanceof values.Declaration) {

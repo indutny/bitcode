@@ -30,7 +30,7 @@ export class Enumerator {
 
   public get(value: values.Value): number {
     assert(this.map.has(value), 'Stumbled upon non-enumerated value');
-    return this.map.get(value) as number;
+    return this.map.get(value)!;
   }
 
   // Private API
