@@ -2,10 +2,9 @@ import * as assert from 'assert';
 import { types } from 'bitcode-builder';
 
 import { Abbr, BitStream } from './bitstream';
-import { BLOCK_ID, TYPE_CODE } from './constants';
+import { BLOCK_ID, TYPE_CODE, VBR } from './constants';
 
 const TYPE_ABBR_ID_WIDTH = 4;
-const TYPE_REF_WIDTH = 8;
 
 export class TypeTable {
   private readonly list: types.Type[] = [];
@@ -102,8 +101,8 @@ export class TypeTable {
     if (!writer.hasAbbr('array')) {
       writer.defineAbbr(new Abbr('array', [
         Abbr.literal(TYPE_CODE.ARRAY),
-        Abbr.vbr(6),
-        Abbr.vbr(TYPE_REF_WIDTH),
+        Abbr.vbr(VBR.ARRAY_LENGTH),
+        Abbr.vbr(VBR.TYPE_INDEX),
       ]));
     }
 
@@ -114,7 +113,7 @@ export class TypeTable {
     if (!writer.hasAbbr('int')) {
       writer.defineAbbr(new Abbr('int', [
         Abbr.literal(TYPE_CODE.INTEGER),
-        Abbr.vbr(8),
+        Abbr.vbr(VBR.INT_WIDTH),
       ]));
     }
 
@@ -129,7 +128,7 @@ export class TypeTable {
     if (!writer.hasAbbr('ptr')) {
       writer.defineAbbr(new Abbr('ptr', [
         Abbr.literal(TYPE_CODE.POINTER),
-        Abbr.vbr(TYPE_REF_WIDTH),
+        Abbr.vbr(VBR.TYPE_INDEX),
       ]));
     }
 

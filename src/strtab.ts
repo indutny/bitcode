@@ -53,9 +53,9 @@ export class Strtab {
       ]));
     }
 
-    for (const entry of this.list) {
-      writer.writeRecord('blob', [ entry.buffer ]);
-    }
+    writer.writeRecord('blob', [
+      Buffer.concat(this.list.map((e) => e.buffer), this.totalSize),
+    ]);
 
     writer.endBlock();
   }

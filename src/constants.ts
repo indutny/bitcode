@@ -36,3 +36,33 @@ export const TYPE_CODE = {
 export const STRTAB_CODE = {
   BLOB: 1,
 };
+
+export const FIXED = {
+  BOOL: 1,
+  CHAR: 8,
+  LINKAGE: 4,
+  VISIBILITY: 2,
+};
+
+export const VBR = {
+  ALIGNMENT: 3,
+  ARRAY_LENGTH: 8,
+  ATTR_INDEX: 6,
+  INT_WIDTH: 8,
+  STRTAB_LENGTH: 6,
+  STRTAB_OFFSET: 8,
+  TYPE_INDEX: 6,
+  VALUE_INDEX: 8,
+};
+
+export const VISIBILITY = {
+  DEFAULT: 0,
+  HIDDEN: 1,
+  PROTECTED: 2,
+};
+
+export const UNNAMED_ADDR = {
+  LOCAL_UNNAMED_ADDR: 2,
+  NO: 0,
+  UNNAMED_ADDR: 1,
+};
