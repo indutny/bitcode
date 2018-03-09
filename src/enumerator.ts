@@ -1,9 +1,11 @@
 import * as assert from 'assert';
 import { values } from 'bitcode-builder';
 
+import constants = values.constants;
+
 export interface IEnumeratorInput {
-  decls: ReadonlyArray<values.constants.Declaration>;
-  fns: ReadonlyArray<values.constants.Func>;
+  decls: ReadonlyArray<constants.Declaration>;
+  fns: ReadonlyArray<constants.Func>;
   globals: ReadonlyArray<values.Global>;
 }
 
@@ -12,14 +14,14 @@ enum EnumerateMode {
   CONSTANTS_ONLY,
 }
 
-type RWConstantList = values.constants.Constant[];
-export type ConstantList = ReadonlyArray<values.constants.Constant>;
+type RWConstantList = constants.Constant[];
+export type ConstantList = ReadonlyArray<constants.Constant>;
 
 export class Enumerator {
   private map: Map<values.Value, number> = new Map();
   private index: number = 0;
   private globalConstants: RWConstantList = [];
-  private functionConstants: Map<values.constants.Func, RWConstantList> =
+  private functionConstants: Map<constants.Func, RWConstantList> =
     new Map();
 
   public enumerate(input: IEnumeratorInput): void {
@@ -64,7 +66,7 @@ export class Enumerator {
     return this.globalConstants;
   }
 
-  public getFunctionConstants(fn: values.constants.Func): ConstantList {
+  public getFunctionConstants(fn: constants.Func): ConstantList {
     assert(this.functionConstants.has(fn), `Unexpected function: "${fn.name}"`);
     return this.functionConstants.get(fn)!;
   }
@@ -88,7 +90,7 @@ export class Enumerator {
     }
   }
 
-  private enumerateGlobalConst(c: values.constants.Constant) {
+  private enumerateGlobalConst(c: constants.Constant) {
     if (c.isArray()) {
       for (const elem of c.toArray().elems) {
         this.enumerateGlobalConst(elem);
@@ -103,37 +105,37 @@ export class Enumerator {
     this.enumerateValue(c);
   }
 
-  private enumerateFunction(fn: values.constants.Func): void {
-    const constants: RWConstantList = [];
+  private enumerateFunction(fn: constants.Func): void {
+    const constList: RWConstantList = [];
 
     for (const arg of fn.args) {
       this.enumerateValue(arg);
     }
 
     for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY, constants);
+      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY, constList);
     }
 
     for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.ALL, constants);
+      this.enumerateBlock(bb, EnumerateMode.ALL, constList);
     }
 
-    this.functionConstants.set(fn, constants);
+    this.functionConstants.set(fn, constList);
   }
 
-  private enumerateDeclaration(fn: values.constants.Declaration): void {
+  private enumerateDeclaration(fn: constants.Declaration): void {
     // Nothing special, so far
     this.enumerateValue(fn);
   }
 
   private enumerateBlock(bb: values.BasicBlock,
                          mode: EnumerateMode,
-                         constants: RWConstantList): void {
+                         constList: RWConstantList): void {
     for (const instr of bb) {
       // All operands, except constants should be already enumerated
       for (const operand of instr) {
         if (mode === EnumerateMode.CONSTANTS_ONLY && operand.isConstant()) {
-          constants.push(operand.toConstant());
+          constList.push(operand.toConstant());
         }
         this.enumerateValue(operand, EnumerateMode.CONSTANTS_ONLY);
       }

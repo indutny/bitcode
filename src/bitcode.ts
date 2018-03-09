@@ -12,6 +12,9 @@ import { ConstantList, Enumerator } from './enumerator';
 import { Strtab } from './strtab';
 import { TypeTable } from './type-table';
 
+import constants = values.constants;
+import instructions = values.instructions;
+
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 const CONSTANTS_ABBR_ID_WIDTH = 5;
@@ -19,8 +22,8 @@ const FUNCTION_ABBR_ID_WIDTH = 6;
 const VALUE_SYMTAB_ABBR_ID_WIDTH = 3;
 
 export class Module {
-  private readonly fns: values.constants.Func[] = [];
-  private readonly decls: values.constants.Declaration[] = [];
+  private readonly fns: constants.Func[] = [];
+  private readonly decls: constants.Declaration[] = [];
   private readonly globals: values.Global[] = [];
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeTable: TypeTable = new TypeTable();
@@ -30,11 +33,11 @@ export class Module {
   constructor(public readonly sourceName?: string) {
   }
 
-  public addFunction(fn: values.constants.Func): void {
+  public addFunction(fn: constants.Func): void {
     this.fns.push(fn);
   }
 
-  public addDeclaration(decl: values.constants.Declaration): void {
+  public addDeclaration(decl: constants.Declaration): void {
     this.decls.push(decl);
   }
 
@@ -97,9 +100,9 @@ export class Module {
 
   public add(value: values.Value): Module {
     // NOTE: test `Func` first since it is a subclass of `Declaration`
-    if (value instanceof values.constants.Func) {
+    if (value instanceof constants.Func) {
       this.addFunction(value);
-    } else if (value instanceof values.constants.Declaration) {
+    } else if (value instanceof constants.Declaration) {
       this.addDeclaration(value);
     } else if (value instanceof values.Global) {
       this.addGlobal(value);
@@ -278,8 +281,7 @@ export class Module {
       Abbr.fixed(FIXED.BOOL),  // dso_local
     ]));
 
-    const decls =
-      (this.fns as values.constants.Declaration[]).concat(this.decls);
+    const decls = (this.fns as constants.Declaration[]).concat(this.decls);
     for (const decl of decls) {
       const name = this.strtab.add(decl.name);
 
@@ -339,7 +341,7 @@ export class Module {
   }
 
   private buildInstruction(writer: BitStream,
-                           instr: values.instructions.Instruction): void {
+                           instr: instructions.Instruction): void {
     this.checkValueOrder(instr);
 
     const instrId = this.enumerator.get(instr);
@@ -348,13 +350,13 @@ export class Module {
     };
 
     // TODO(indutny): support forward references
-    if (instr instanceof values.instructions.Ret) {
+    if (instr instanceof instructions.Ret) {
       if (instr.operand === undefined) {
         writer.writeRecord('ret_void', []);
       } else {
         writer.writeRecord('ret', [ relativeId(instr.operand) ]);
       }
-    } else if (instr instanceof values.instructions.Binop) {
+    } else if (instr instanceof instructions.Binop) {
       writer.writeRecord('binop', [
         relativeId(instr.left),
         relativeId(instr.right),
@@ -423,7 +425,7 @@ export class Module {
     }
   }
 
-  private encodeCastType(cast: values.instructions.CastType) {
+  private encodeCastType(cast: instructions.CastType) {
     switch (cast) {
       case 'trunc': return 0;
       case 'zext': return 1;
@@ -442,7 +444,7 @@ export class Module {
     }
   }
 
-  private encodeBinopType(binop: values.instructions.BinopType) {
+  private encodeBinopType(binop: instructions.BinopType) {
     switch (binop) {
       case 'add': return 0;
       case 'sub': return 1;
