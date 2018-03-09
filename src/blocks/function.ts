@@ -1,3 +1,5 @@
+import * as assert from 'assert';
+
 import { values } from 'bitcode-builder';
 import { Abbr, BitStream, BlockInfoMap } from '../bitstream';
 import {
@@ -11,6 +13,7 @@ import { TypeBlock } from './type';
 
 import constants = values.constants;
 import instructions = values.instructions;
+import BasicBlock = values.BasicBlock;
 
 const FUNCTION_ABBR_ID_WIDTH = 6;
 const VALUE_SYMTAB_ABBR_ID_WIDTH = 3;
@@ -34,6 +37,16 @@ export class FunctionBlock extends Block {
         Abbr.vbr(VBR.VALUE_INDEX),  // left
         Abbr.vbr(VBR.VALUE_INDEX),  // right
         Abbr.fixed(FIXED.BINOP_TYPE),
+      ]),
+      new Abbr('jump', [
+        Abbr.literal(FUNCTION_CODE.INST_BR),
+        Abbr.vbr(VBR.BLOCK_INDEX),  // target
+      ]),
+      new Abbr('br', [
+        Abbr.literal(FUNCTION_CODE.INST_BR),
+        Abbr.vbr(VBR.BLOCK_INDEX),  // onTrue
+        Abbr.vbr(VBR.BLOCK_INDEX),  // onFalse
+        Abbr.vbr(VBR.VALUE_INDEX),  // condition
       ]),
     ]);
 
@@ -67,12 +80,15 @@ export class FunctionBlock extends Block {
       this.enumerator.getFunctionConstants(fn));
     fnConstants.build(writer);
 
-    const blocks = Array.from(fn);
+    const blocks: ReadonlyArray<BasicBlock> = Array.from(fn);
+    const blockIds: Map<BasicBlock, number> = new Map();
+    blocks.forEach((bb, index) => blockIds.set(bb, index));
+
     writer.writeRecord('declareblocks', [ blocks.length ]);
 
     for (const bb of blocks) {
       for (const instr of bb) {
-        this.buildInstruction(writer, instr);
+        this.buildInstruction(writer, instr, blockIds);
       }
     }
 
@@ -82,7 +98,8 @@ export class FunctionBlock extends Block {
   }
 
   private buildInstruction(writer: BitStream,
-                           instr: instructions.Instruction): void {
+                           instr: instructions.Instruction,
+                           blockIds: Map<BasicBlock, number>): void {
     this.enumerator.checkValueOrder(instr);
 
     const instrId = this.enumerator.get(instr);
@@ -103,11 +120,18 @@ export class FunctionBlock extends Block {
         relativeId(instr.right),
         encodeBinopType(instr.binopType),
       ]);
+    } else if (instr instanceof instructions.Jump) {
+      assert(blockIds.has(instr.target), 'Unknown block');
+
+      writer.writeRecord('jump', [
+        blockIds.get(instr.target)!,
+      ]);
+    } else {
+      throw new Error(`Unsupported instruction: "${instr.opcode}"`);
     }
   }
 
-  private buildSymtab(writer: BitStream,
-                      blocks: ReadonlyArray<values.BasicBlock>) {
+  private buildSymtab(writer: BitStream, blocks: ReadonlyArray<BasicBlock>) {
     // Write block/param names
     writer.enterBlock(BLOCK_ID.VALUE_SYMTAB, VALUE_SYMTAB_ABBR_ID_WIDTH);
 

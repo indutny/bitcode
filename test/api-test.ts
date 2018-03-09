@@ -18,8 +18,12 @@ describe('bitcode/compiler', () => {
 
     const sum = fn.body.binop('add', fn.getArgument('param1'),
       fn.getArgument('param2'));
-    const sum2 = fn.body.binop('add', sum, b.i(32).val(123));
-    fn.body.ret(sum2);
+
+    const bb1 = fn.createBlock('bb1');
+    fn.body.jmp(bb1);
+
+    const sum2 = bb1.binop('add', sum, b.i(32).val(123));
+    bb1.ret(sum2);
 
     const arrTy = b.array(4, b.i(32));
     const glob = b.global(arrTy.ptr(), 'some_global', arrTy.val([
