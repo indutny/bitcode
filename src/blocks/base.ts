@@ -1,11 +1,11 @@
-import { BitStream, BlockInfoMap } from '../bitstream';
+import { BitStream } from '../bitstream';
 import { Enumerator } from '../enumerator';
 import { TypeTable } from '../type-table';
 
-export abstract class Builder {
+export abstract class Block {
   constructor(protected readonly enumerator: Enumerator,
               protected readonly typeTable: TypeTable) {
   }
 
-  public abstract buildInfo(info: BlockInfoMap): void;
+  public abstract build(writer: BitStream): void;
 }

@@ -58,7 +58,7 @@ export class TypeTable {
     for (const ty of this.list) {
       this.write(writer, ty);
     }
-    writer.endBlock();
+    writer.endBlock(BLOCK_ID.TYPE);
   }
 
   // Private API

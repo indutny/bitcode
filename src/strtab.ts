@@ -57,6 +57,6 @@ export class Strtab {
       Buffer.concat(this.list.map((e) => e.buffer), this.totalSize),
     ]);
 
-    writer.endBlock();
+    writer.endBlock(BLOCK_ID.STRTAB);
   }
 }

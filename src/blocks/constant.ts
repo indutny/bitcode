@@ -2,13 +2,14 @@ import { types } from 'bitcode-builder';
 import { Abbr, BitStream, BlockInfoMap } from '../bitstream';
 import { BLOCK_ID, CONSTANTS_CODE, VBR } from '../constants';
 import { encodeSigned } from '../encoding';
-import { ConstantList } from '../enumerator';
-import { Builder } from './base';
+import { ConstantList, Enumerator } from '../enumerator';
+import { TypeTable } from '../type-table';
+import { Block } from './base';
 
 const CONSTANTS_ABBR_ID_WIDTH = 5;
 
-export class ConstantBuilder extends Builder {
-  public buildInfo(info: BlockInfoMap): void {
+export class ConstantBlock extends Block {
+  public static buildInfo(info: BlockInfoMap): void {
     info.set(BLOCK_ID.CONSTANTS, [
       new Abbr('settype', [
         Abbr.literal(CONSTANTS_CODE.SETTYPE),
@@ -31,7 +32,13 @@ export class ConstantBuilder extends Builder {
     ]);
   }
 
-  public build(writer: BitStream, list: ConstantList): void {
+  constructor(enumerator: Enumerator, typeTable: TypeTable,
+              private readonly list: ConstantList) {
+    super(enumerator, typeTable);
+  }
+
+  public build(writer: BitStream): void {
+    const list = this.list;
     if (list.length === 0) {
       return;
     }
@@ -69,6 +76,6 @@ export class ConstantBuilder extends Builder {
         throw new Error(`Unexpected constant value: "${c.constructor.name}"`);
       }
     }
-    writer.endBlock();
+    writer.endBlock(BLOCK_ID.CONSTANTS);
   }
 }

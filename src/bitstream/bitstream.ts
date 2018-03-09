@@ -64,9 +64,10 @@ export class BitStream {
     return this;
   }
 
-  public endBlock(): BitStream {
+  public endBlock(id: number): BitStream {
     assert(this.stack.length > 0, 'No blocks to end');
     const elem = this.stack.pop() as IStackElem;
+    assert.strictEqual(elem.block.id, id, 'Ending invalid block');
 
     this.writeAbbrID(END_BLOCK);
     this.align(DWORD_BITS);
@@ -99,7 +100,7 @@ export class BitStream {
       }
     });
 
-    this.endBlock();
+    this.endBlock(BLOCKINFO);
 
     return this;
   }

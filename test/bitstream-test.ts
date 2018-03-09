@@ -34,7 +34,7 @@ describe('bitcode/bitstream', () => {
 
   it('should enter and leave blocks', () => {
     b.enterBlock(8, 2);
-    b.endBlock();
+    b.endBlock(8);
 
     check(b, '210800000100000000000000');
   });
@@ -42,8 +42,8 @@ describe('bitcode/bitstream', () => {
   it('should enter and leave subblocks', () => {
     b.enterBlock(8, 4);
     b.enterBlock(9, 6);
-    b.endBlock();
-    b.endBlock();
+    b.endBlock(9);
+    b.endBlock(8);
 
     check(b, '211000000400000091600000010000000000000000000000');
   });
@@ -54,7 +54,7 @@ describe('bitcode/bitstream', () => {
     // SOURCE
     b.writeUnabbrRecord(16, [ 1, 2, 3, 4, 5 ]);
 
-    b.endBlock();
+    b.endBlock(8);
 
     check(b, '21100000020000000315813010050000');
   });
@@ -70,7 +70,7 @@ describe('bitcode/bitstream', () => {
     // SOURCE
     b.writeRecord('source', [ 'hello_world' ]);
 
-    b.endBlock();
+    b.endBlock(8);
 
     check(b, '2110000004000000324218d27210cbe2fc96132d03000000');
   });
@@ -87,7 +87,7 @@ describe('bitcode/bitstream', () => {
 
     b.writeBlockInfo(info);
 
-    b.endBlock();
+    b.endBlock(8);
 
     check(b, '211000000500000001200000020000000741e4086108000000000000');
   });

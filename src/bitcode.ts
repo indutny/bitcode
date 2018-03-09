@@ -4,7 +4,7 @@ import { Builder, types, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
-import { ConstantBuilder } from './builders';
+import { ConstantBlock } from './blocks';
 import {
   BLOCK_ID, FIXED, FUNCTION_CODE, MODULE_CODE, UNNAMED_ADDR,
   VALUE_SYMTAB_CODE, VBR, VISIBILITY,
@@ -29,13 +29,6 @@ export class Module {
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeTable: TypeTable = new TypeTable();
   private readonly strtab: Strtab = new Strtab();
-
-  // Builders
-
-  private readonly constantBuilder: ConstantBuilder = new ConstantBuilder(
-    this.enumerator,
-    this.typeTable,
-  );
 
   constructor(public readonly sourceName?: string) {
   }
@@ -87,11 +80,16 @@ export class Module {
     this.typeTable.build(writer);
 
     this.buildGlobals(writer);
-    this.constantBuilder.build(writer, this.enumerator.getGlobalConstants());
+
+    const globalConstants = new ConstantBlock(this.enumerator, this.typeTable,
+      this.enumerator.getGlobalConstants());
+
+    globalConstants.build(writer);
+
     this.buildDeclarations(writer);
     this.buildFunctionBodies(writer);
 
-    writer.endBlock();
+    writer.endBlock(BLOCK_ID.MODULE);
 
     // Build STRTAB last, when we've added all strings to it
     this.strtab.build(writer);
@@ -157,7 +155,7 @@ export class Module {
       ]),
     ]);
 
-    this.constantBuilder.buildInfo(info);
+    ConstantBlock.buildInfo(info);
 
     writer.writeBlockInfo(info);
   }
@@ -255,8 +253,9 @@ export class Module {
     for (const fn of this.fns) {
       writer.enterBlock(BLOCK_ID.FUNCTION, FUNCTION_ABBR_ID_WIDTH);
 
-      this.constantBuilder.build(writer,
+      const fnConstants = new ConstantBlock(this.enumerator, this.typeTable,
         this.enumerator.getFunctionConstants(fn));
+      fnConstants.build(writer);
 
       const blocks = Array.from(fn);
       writer.writeRecord('declareblocks', [ blocks.length ]);
@@ -282,9 +281,9 @@ export class Module {
         writer.writeRecord('entry', [ this.enumerator.get(arg), arg.name ]);
       });
 
-      writer.endBlock();
+      writer.endBlock(BLOCK_ID.VALUE_SYMTAB);
 
-      writer.endBlock();
+      writer.endBlock(BLOCK_ID.FUNCTION);
     }
   }
 
