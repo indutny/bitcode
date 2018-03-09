@@ -154,7 +154,7 @@ export class Module {
         name.offset,
         name.length,
         this.typeBlock.get(g.ty),
-        g.isConstant() ? 1 : 0,
+        g.hasConstantValue() ? 1 : 0,
         g.init === undefined ? 0 : 1 + this.enumerator.get(g.init),
         encodeLinkage(g.linkage),
         0,  // alignment

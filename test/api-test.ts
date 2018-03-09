@@ -10,6 +10,17 @@ describe('bitcode/compiler', () => {
   });
 
   it('should compile a module', () => {
+    const arrTy = b.array(4, b.i(32));
+    const glob = b.global(arrTy.ptr(), 'some_global', arrTy.val([
+      b.i(32).val(1),
+      b.i(32).val(2),
+      b.i(32).val(-2),
+      b.i(32).val(-1),
+    ]));
+
+    glob.linkage = 'internal';
+    glob.markConstant();
+
     const extra = b.signature(b.void(), [ b.i(32) ]).declareFunction('extra');
 
     const fn = b.signature(b.i(32), [ b.i(32), b.i(32) ]).defineFunction(
@@ -29,21 +40,13 @@ describe('bitcode/compiler', () => {
     const cast = bb1.cast('zext', sum, b.i(64));
     const sum2 = bb1.binop('add', cast, b.i(64).val(123));
     const trunc = bb1.cast('trunc', sum2, b.i(32));
+
+    bb1.load(glob, 32, true);
+
     bb1.call(extra, [ trunc ]);
     bb1.ret(trunc);
 
     bb2.unreachable();
-
-    const arrTy = b.array(4, b.i(32));
-    const glob = b.global(arrTy.ptr(), 'some_global', arrTy.val([
-      b.i(32).val(1),
-      b.i(32).val(2),
-      b.i(32).val(-2),
-      b.i(32).val(-1),
-    ]));
-
-    glob.linkage = 'internal';
-    glob.markConstant();
 
     m.add(fn);
     m.add(extra);

@@ -71,6 +71,20 @@ export class FunctionBlock extends Block {
         Abbr.vbr(VBR.VALUE_INDEX),  // right
         Abbr.fixed(FIXED.PREDICATE),  // predicate
       ]),
+      new Abbr('load', [
+        Abbr.literal(FUNCTION_CODE.INST_LOAD),
+        Abbr.vbr(VBR.TYPE_INDEX),  // resultTy
+        Abbr.vbr(VBR.VALUE_INDEX),  // ptr
+        Abbr.vbr(VBR.ALIGNMENT),  // alignment
+        Abbr.fixed(FIXED.BOOL),  // isVolatile
+      ]),
+      new Abbr('store', [
+        Abbr.literal(FUNCTION_CODE.INST_LOAD),
+        Abbr.vbr(VBR.VALUE_INDEX),  // ptr
+        Abbr.vbr(VBR.VALUE_INDEX),  // value
+        Abbr.vbr(VBR.ALIGNMENT),  // alignment
+        Abbr.fixed(FIXED.BOOL),  // isVolatile
+      ]),
     ]);
 
     info.set(BLOCK_ID.VALUE_SYMTAB, [
@@ -177,6 +191,20 @@ export class FunctionBlock extends Block {
         relativeId(instr.left),
         relativeId(instr.right),
         encodeICmpPredicate(instr.predicate),
+      ]);
+    } else if (instr instanceof instructions.Load) {
+      writer.writeRecord('load', [
+        relativeId(instr.ptr),
+        this.typeBlock.get(instr.ty),
+        instr.alignment === undefined ? 0 : 1 + Math.log2(instr.alignment),
+        instr.isVolatile ? 1 : 0,
+      ]);
+    } else if (instr instanceof instructions.Store) {
+      writer.writeRecord('store', [
+        relativeId(instr.ptr),
+        relativeId(instr.value),
+        instr.alignment === undefined ? 0 : 1 + Math.log2(instr.alignment),
+        instr.isVolatile ? 1 : 0,
       ]);
     } else if (instr instanceof instructions.Call) {
       const operands = [];
