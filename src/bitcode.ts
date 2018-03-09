@@ -14,6 +14,7 @@ import { TypeTable } from './type-table';
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 const CONSTANTS_ABBR_ID_WIDTH = 5;
+const FUNCTION_ABBR_ID_WIDTH = 6;
 
 export class Module {
   private readonly fns: values.constants.Func[] = [];
@@ -76,6 +77,7 @@ export class Module {
     this.buildGlobals(writer);
     this.buildConstants(writer, this.enumerator.getGlobalConstants());
     this.buildDeclarations(writer);
+    this.buildFunctionBodies(writer);
 
     writer.endBlock();
 
@@ -175,7 +177,7 @@ export class Module {
                          list: ReadonlyArray<values.constants.Constant>): void {
     writer.enterBlock(BLOCK_ID.CONSTANTS, CONSTANTS_ABBR_ID_WIDTH);
     let lastType: types.Type | undefined;
-    for (const c of this.enumerator.getGlobalConstants()) {
+    for (const c of list) {
       if (lastType !== c.ty) {
         writer.writeRecord('settype', [ this.typeTable.get(c.ty) ]);
         lastType = c.ty;
@@ -245,6 +247,16 @@ export class Module {
     }
   }
 
+  private buildFunctionBodies(writer: BitStream): void {
+    for (const fn of this.fns) {
+      writer.enterBlock(BLOCK_ID.FUNCTION_BLOCK, FUNCTION_ABBR_ID_WIDTH);
+
+      this.buildConstants(writer, this.enumerator.getFunctionConstants(fn));
+
+      writer.endBlock();
+    }
+  }
+
   // Ensure that values are emitted in the same order they were enumerated
   private checkValueOrder(value: values.Value): void {
     const index = this.enumerator.get(value);
@@ -302,6 +314,25 @@ export class Module {
       return (-value << 1) | 1;
     } else {
       return value << 1;
+    }
+  }
+
+  private encodeCastType(cast: values.instructions.CastType) {
+    switch (cast) {
+      case 'trunc': return 0;
+      case 'zext': return 1;
+      case 'sext': return 2;
+      case 'fptoui': return 3;
+      case 'fptosi': return 4;
+      case 'uitofp': return 5;
+      case 'sitofp': return 6;
+      case 'fptrunc': return 7;
+      case 'fpext': return 8;
+      case 'ptrtoint': return 9;
+      case 'inttoptr': return 10;
+      case 'bitcast': return 11;
+      case 'addrspacecast': return 12;
+      default: throw new Error(`Unsupported cast type: "${cast}"`);
     }
   }
 }

@@ -16,6 +16,8 @@ export class Enumerator {
   private map: Map<values.Value, number> = new Map();
   private index: number = 1;
   private globalConstants: values.constants.Constant[] = [];
+  private functionConstants
+    : Map<values.constants.Func, values.constants.Constant[]> = new Map();
 
   public enumerate(input: IEnumeratorInput): void {
     // 1. Enumerate globals
@@ -60,6 +62,12 @@ export class Enumerator {
     return this.globalConstants;
   }
 
+  public getFunctionConstants(fn: values.constants.Func)
+    : ReadonlyArray<values.constants.Constant> {
+    assert(this.functionConstants.has(fn), `Unexpected function: "${fn.name}"`);
+    return this.functionConstants.get(fn)!;
+  }
+
   // Private API
 
   private enumerateValue(value: values.Value,
@@ -89,9 +97,11 @@ export class Enumerator {
   }
 
   private enumerateFunction(fn: values.constants.Func): void {
+    const constants: values.constants.Constant[] = [];
+
     // Enumerate function constants first
     for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY);
+      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY, constants);
     }
 
     for (const arg of fn.args) {
@@ -99,8 +109,10 @@ export class Enumerator {
     }
 
     for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.ALL);
+      this.enumerateBlock(bb, EnumerateMode.ALL, constants);
     }
+
+    this.functionConstants.set(fn, constants);
   }
 
   private enumerateDeclaration(fn: values.constants.Declaration): void {
@@ -109,10 +121,14 @@ export class Enumerator {
   }
 
   private enumerateBlock(bb: values.BasicBlock,
-                         mode: EnumerateMode): void {
+                         mode: EnumerateMode,
+                         constants: values.constants.Constant[]): void {
     for (const instr of bb) {
       // All operands, except constants should be already enumerated
       for (const operand of instr) {
+        if (mode === EnumerateMode.CONSTANTS_ONLY && operand.isConstant()) {
+          constants.push(operand.toConstant());
+        }
         this.enumerateValue(operand, EnumerateMode.CONSTANTS_ONLY);
       }
 

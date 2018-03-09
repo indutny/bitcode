@@ -1,5 +1,6 @@
 export const BLOCK_ID = {
   CONSTANTS: 11,
+  FUNCTION_BLOCK: 12,
   MODULE: 8,
   STRTAB: 23,
   TYPE: 17,
