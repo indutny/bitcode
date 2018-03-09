@@ -1,24 +1,20 @@
 import * as assert from 'assert';
 
-import { Builder, types, values } from 'bitcode-builder';
+import { Builder, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
-import { ConstantBlock, StrtabBlock, TypeBlock } from './blocks';
+import { ConstantBlock, FunctionBlock, StrtabBlock, TypeBlock } from './blocks';
 import {
-  BLOCK_ID, FIXED, FUNCTION_CODE, MODULE_CODE, UNNAMED_ADDR,
-  VALUE_SYMTAB_CODE, VBR, VISIBILITY,
+  BLOCK_ID, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
 } from './constants';
-import { encodeBinopType, encodeCConv, encodeLinkage } from './encoding';
-import { ConstantList, Enumerator } from './enumerator';
+import { encodeCConv, encodeLinkage } from './encoding';
+import { Enumerator } from './enumerator';
 
 import constants = values.constants;
-import instructions = values.instructions;
 
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
-const FUNCTION_ABBR_ID_WIDTH = 6;
-const VALUE_SYMTAB_ABBR_ID_WIDTH = 3;
 
 export class Module {
   private readonly fns: constants.Func[] = [];
@@ -120,40 +116,8 @@ export class Module {
   private defineBlockInfo(writer: BitStream): void {
     const info: BlockInfoMap = new Map();
 
-    info.set(BLOCK_ID.FUNCTION, [
-      new Abbr('declareblocks', [
-        Abbr.literal(FUNCTION_CODE.DECLAREBLOCKS),
-        Abbr.vbr(VBR.BLOCK_COUNT),
-      ]),
-      new Abbr('ret_void', [
-        Abbr.literal(FUNCTION_CODE.INST_RET),
-      ]),
-      new Abbr('ret', [
-        Abbr.literal(FUNCTION_CODE.INST_RET),
-        Abbr.vbr(VBR.VALUE_INDEX),
-      ]),
-      new Abbr('binop', [
-        Abbr.literal(FUNCTION_CODE.INST_BINOP),
-        Abbr.vbr(VBR.VALUE_INDEX),  // left
-        Abbr.vbr(VBR.VALUE_INDEX),  // right
-        Abbr.fixed(FIXED.BINOP_TYPE),
-      ]),
-    ]);
-
-    info.set(BLOCK_ID.VALUE_SYMTAB, [
-      new Abbr('bbentry', [
-        Abbr.literal(VALUE_SYMTAB_CODE.BBENTRY),
-        Abbr.vbr(VBR.BLOCK_INDEX),
-        Abbr.array(Abbr.char6()),
-      ]),
-      new Abbr('entry', [
-        Abbr.literal(VALUE_SYMTAB_CODE.ENTRY),
-        Abbr.vbr(VBR.VALUE_INDEX),
-        Abbr.array(Abbr.char6()),
-      ]),
-    ]);
-
     ConstantBlock.buildInfo(info);
+    FunctionBlock.buildInfo(info);
 
     writer.writeBlockInfo(info);
   }
@@ -249,64 +213,8 @@ export class Module {
 
   private buildFunctionBodies(writer: BitStream): void {
     for (const fn of this.fns) {
-      writer.enterBlock(BLOCK_ID.FUNCTION, FUNCTION_ABBR_ID_WIDTH);
-
-      const fnConstants = new ConstantBlock(this.enumerator, this.typeBlock,
-        this.enumerator.getFunctionConstants(fn));
-      fnConstants.build(writer);
-
-      const blocks = Array.from(fn);
-      writer.writeRecord('declareblocks', [ blocks.length ]);
-
-      for (const bb of blocks) {
-        for (const instr of bb) {
-          this.buildInstruction(writer, instr);
-        }
-      }
-
-      // Write block/param names
-      writer.enterBlock(BLOCK_ID.VALUE_SYMTAB, VALUE_SYMTAB_ABBR_ID_WIDTH);
-
-      blocks.forEach((bb, index) => {
-        if (bb.name === undefined) {
-          return;
-        }
-
-        writer.writeRecord('bbentry', [ index, bb.name ]);
-      });
-
-      fn.args.forEach((arg, index) => {
-        writer.writeRecord('entry', [ this.enumerator.get(arg), arg.name ]);
-      });
-
-      writer.endBlock(BLOCK_ID.VALUE_SYMTAB);
-
-      writer.endBlock(BLOCK_ID.FUNCTION);
-    }
-  }
-
-  private buildInstruction(writer: BitStream,
-                           instr: instructions.Instruction): void {
-    this.enumerator.checkValueOrder(instr);
-
-    const instrId = this.enumerator.get(instr);
-    const relativeId = (operand: values.Value): number => {
-      return instrId - this.enumerator.get(operand);
-    };
-
-    // TODO(indutny): support forward references
-    if (instr instanceof instructions.Ret) {
-      if (instr.operand === undefined) {
-        writer.writeRecord('ret_void', []);
-      } else {
-        writer.writeRecord('ret', [ relativeId(instr.operand) ]);
-      }
-    } else if (instr instanceof instructions.Binop) {
-      writer.writeRecord('binop', [
-        relativeId(instr.left),
-        relativeId(instr.right),
-        encodeBinopType(instr.binopType),
-      ]);
+      const block = new FunctionBlock(this.enumerator, this.typeBlock, fn);
+      block.build(writer);
     }
   }
 }
