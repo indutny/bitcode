@@ -76,22 +76,7 @@ export class FunctionBlock extends Block {
       }
     }
 
-    // Write block/param names
-    writer.enterBlock(BLOCK_ID.VALUE_SYMTAB, VALUE_SYMTAB_ABBR_ID_WIDTH);
-
-    blocks.forEach((bb, index) => {
-      if (bb.name === undefined) {
-        return;
-      }
-
-      writer.writeRecord('bbentry', [ index, bb.name ]);
-    });
-
-    fn.args.forEach((arg, index) => {
-      writer.writeRecord('entry', [ this.enumerator.get(arg), arg.name ]);
-    });
-
-    writer.endBlock(BLOCK_ID.VALUE_SYMTAB);
+    this.buildSymtab(writer, blocks);
 
     writer.endBlock(BLOCK_ID.FUNCTION);
   }
@@ -119,5 +104,25 @@ export class FunctionBlock extends Block {
         encodeBinopType(instr.binopType),
       ]);
     }
+  }
+
+  private buildSymtab(writer: BitStream,
+                      blocks: ReadonlyArray<values.BasicBlock>) {
+    // Write block/param names
+    writer.enterBlock(BLOCK_ID.VALUE_SYMTAB, VALUE_SYMTAB_ABBR_ID_WIDTH);
+
+    blocks.forEach((bb, index) => {
+      if (bb.name === undefined) {
+        return;
+      }
+
+      writer.writeRecord('bbentry', [ index, bb.name ]);
+    });
+
+    this.fn.args.forEach((arg, index) => {
+      writer.writeRecord('entry', [ this.enumerator.get(arg), arg.name ]);
+    });
+
+    writer.endBlock(BLOCK_ID.VALUE_SYMTAB);
   }
 }
