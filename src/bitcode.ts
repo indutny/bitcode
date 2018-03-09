@@ -16,6 +16,8 @@ import constants = values.constants;
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 
+export { Builder };
+
 export class Module {
   private readonly fns: constants.Func[] = [];
   private readonly decls: constants.Declaration[] = [];
