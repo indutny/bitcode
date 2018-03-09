@@ -1,11 +1,13 @@
+// TODO(indutny): should be enum?
 export const BLOCK_ID = {
   CONSTANTS: 11,
-  FUNCTION_BLOCK: 12,
+  FUNCTION: 12,
   MODULE: 8,
   STRTAB: 23,
   TYPE: 17,
 };
 
+// TODO(indutny): should be enum?
 export const MODULE_CODE = {
   FUNCTION: 8,
   GLOBALVAR: 7,
@@ -13,6 +15,7 @@ export const MODULE_CODE = {
   VERSION: 1,
 };
 
+// TODO(indutny): should be enum?
 export const TYPE_CODE = {
   ARRAY: 11,
   DOUBLE: 4,
@@ -54,7 +57,51 @@ export const CONSTANTS_CODE = {
   WIDE_INTEGER: 5,
 };
 
+// TODO(indutny): should be enum?
+export const FUNCTION_CODE = {
+  DEBUG_LOC: 35,
+  DEBUG_LOC_AGAIN: 33,
+  DECLAREBLOCKS: 1,
+  INST_ALLOCA: 19,
+  INST_ATOMICRMW: 38,
+  INST_BINOP: 2,
+  INST_BR: 11,
+  INST_CALL: 34,
+  INST_CAST: 3,
+  INST_CATCHPAD: 50,
+  INST_CATCHRET: 49,
+  INST_CLEANSWITCH: 52,
+  INST_CLEANUPPAD: 51,
+  INST_CLEANUPRET: 48,
+  INST_CMP: 9,
+  INST_CMP2: 28,
+  INST_CMPXCHG: 46,
+  INST_EXTRACTELT: 6,
+  INST_EXTRACTVAL: 26,
+  INST_FENCE: 36,
+  INST_GEP: 43,
+  INST_INSERTELT: 7,
+  INST_INSERTVAL: 27,
+  INST_INVOKE: 13,
+  INST_LANDINGPAD: 47,
+  INST_LOAD: 20,
+  INST_LOADATOMIC: 41,
+  INST_PHI: 16,
+  INST_RESUME: 39,
+  INST_RET: 10,
+  INST_SELECT: 29,
+  INST_SHUFFLEVEC: 8,
+  INST_STORE: 44,
+  INST_STOREATOMIC: 45,
+  INST_SWITCH: 12,
+  INST_UNREACHABLE: 15,
+  INST_VAARG: 23,
+  INST_VSELECT: 5,
+  OPERAND_BUNDLE: 55,
+};
+
 export const FIXED = {
+  BINOP_TYPE: 4,
   BOOL: 1,
   CHAR: 8,
   LINKAGE: 4,
@@ -65,6 +112,7 @@ export const VBR = {
   ALIGNMENT: 3,
   ARRAY_LENGTH: 8,
   ATTR_INDEX: 6,
+  BLOCK_COUNT: 6,
   CCONV: 5,
   INTEGER: 8,
   INT_WIDTH: 8,

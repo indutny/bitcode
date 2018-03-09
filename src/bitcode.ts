@@ -5,7 +5,8 @@ import { Buffer } from 'buffer';
 
 import { Abbr, BitStream } from './bitstream';
 import {
-  BLOCK_ID, CONSTANTS_CODE, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
+  BLOCK_ID, CONSTANTS_CODE, FIXED, FUNCTION_CODE, MODULE_CODE, UNNAMED_ADDR,
+  VBR, VISIBILITY,
 } from './constants';
 import { ConstantList, Enumerator } from './enumerator';
 import { Strtab } from './strtab';
@@ -129,6 +130,26 @@ export class Module {
       ]),
     ]);
 
+    info.set(BLOCK_ID.FUNCTION, [
+      new Abbr('declareblocks', [
+        Abbr.literal(FUNCTION_CODE.DECLAREBLOCKS),
+        Abbr.vbr(VBR.BLOCK_COUNT),
+      ]),
+      new Abbr('ret_void', [
+        Abbr.literal(FUNCTION_CODE.INST_RET),
+      ]),
+      new Abbr('ret', [
+        Abbr.literal(FUNCTION_CODE.INST_RET),
+        Abbr.vbr(VBR.VALUE_INDEX),
+      ]),
+      new Abbr('binop', [
+        Abbr.literal(FUNCTION_CODE.INST_BINOP),
+        Abbr.vbr(VBR.VALUE_INDEX),  // left
+        Abbr.vbr(VBR.VALUE_INDEX),  // right
+        Abbr.fixed(FIXED.BINOP_TYPE),
+      ]),
+    ]);
+
     writer.writeBlockInfo(info);
   }
 
@@ -151,7 +172,7 @@ export class Module {
       Abbr.literal(0),  // dllstorageclass
       Abbr.literal(0),  // comdat
       Abbr.vbr(VBR.ATTR_INDEX),
-      Abbr.literal(0),  // preemption specifier
+      Abbr.fixed(FIXED.BOOL),  // dso_local
     ]));
 
     for (const g of this.globals) {
@@ -169,6 +190,8 @@ export class Module {
         0,  // alignment
         VISIBILITY.DEFAULT,
         0,  // TODO(indutny): attributes
+        // dso_local
+        (g.linkage === 'private' || g.linkage === 'internal') ? 1 : 0,
       ]);
     }
   }
@@ -252,18 +275,52 @@ export class Module {
 
   private buildFunctionBodies(writer: BitStream): void {
     for (const fn of this.fns) {
-      writer.enterBlock(BLOCK_ID.FUNCTION_BLOCK, FUNCTION_ABBR_ID_WIDTH);
+      writer.enterBlock(BLOCK_ID.FUNCTION, FUNCTION_ABBR_ID_WIDTH);
 
       this.buildConstants(writer, this.enumerator.getFunctionConstants(fn));
 
+      const blocks = Array.from(fn);
+      writer.writeRecord('declareblocks', [ blocks.length ]);
+
+      for (const bb of blocks) {
+        for (const instr of bb) {
+          this.buildInstruction(writer, instr);
+        }
+      }
+
       writer.endBlock();
+    }
+  }
+
+  private buildInstruction(writer: BitStream,
+                           instr: values.instructions.Instruction): void {
+    this.checkValueOrder(instr);
+
+    const instrId = this.enumerator.get(instr);
+    const relativeId = (operand: values.Value): number => {
+      return instrId - this.enumerator.get(operand);
+    };
+
+    // TODO(indutny): support forward references
+    if (instr instanceof values.instructions.Ret) {
+      if (instr.operand === undefined) {
+        writer.writeRecord('ret_void', []);
+      } else {
+        writer.writeRecord('ret', [ relativeId(instr.operand) ]);
+      }
+    } else if (instr instanceof values.instructions.Binop) {
+      writer.writeRecord('binop', [
+        relativeId(instr.left),
+        relativeId(instr.right),
+        this.encodeBinopType(instr.binopType),
+      ]);
     }
   }
 
   // Ensure that values are emitted in the same order they were enumerated
   private checkValueOrder(value: values.Value): void {
     const index = this.enumerator.get(value);
-    assert(index === this.lastValueIndex || index === this.lastValueIndex + 1,
+    assert(index >= this.lastValueIndex,
       'Invalid order of values (internal error)');
     this.lastValueIndex = index;
   }
@@ -336,6 +393,25 @@ export class Module {
       case 'bitcast': return 11;
       case 'addrspacecast': return 12;
       default: throw new Error(`Unsupported cast type: "${cast}"`);
+    }
+  }
+
+  private encodeBinopType(binop: values.instructions.BinopType) {
+    switch (binop) {
+      case 'add': return 0;
+      case 'sub': return 1;
+      case 'mul': return 2;
+      case 'udiv': return 3;
+      case 'sdiv': return 4;
+      case 'urem': return 5;
+      case 'srem': return 6;
+      case 'shl': return 7;
+      case 'lshr': return 8;
+      case 'ashr': return 9;
+      case 'and': return 10;
+      case 'or': return 11;
+      case 'xor': return 12;
+      default: throw new Error(`Unsupported binop type: "${binop}"`);
     }
   }
 }
