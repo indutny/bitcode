@@ -93,6 +93,7 @@ export class FunctionBlock extends Block {
     super();
   }
 
+  // TODO(indutny): metadata
   public build(writer: BitStream): void {
     super.build(writer);
 
@@ -120,6 +121,7 @@ export class FunctionBlock extends Block {
     writer.endBlock(BLOCK_ID.FUNCTION);
   }
 
+  // TODO(indutny): metadata
   private buildInstruction(writer: BitStream,
                            instr: instructions.Instruction,
                            blockIds: Map<BasicBlock, number>): void {

@@ -123,6 +123,7 @@ export class Module {
   }
 
   // TODO(indutny): support section, alignment, etc
+  // TODO(indutny): metadata
   private buildGlobals(writer: BitStream): void {
     writer.defineAbbr(new Abbr('global', [
       Abbr.literal(MODULE_CODE.GLOBALVAR),
