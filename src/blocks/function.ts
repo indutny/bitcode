@@ -6,7 +6,7 @@ import {
   BLOCK_ID, FIXED, FUNCTION_CODE, VALUE_SYMTAB_CODE, VBR,
 } from '../constants';
 import {
-  encodeBinopType, encodeCastType, encodeICmpPredicate,
+  encodeBinopType, encodeCallFlags, encodeCastType, encodeICmpPredicate,
 } from '../encoding';
 import { Enumerator } from '../enumerator';
 import { Block } from './base';
@@ -174,10 +174,26 @@ export class FunctionBlock extends Block {
       ]);
     } else if (instr instanceof instructions.ICmp) {
       writer.writeRecord('icmp', [
-        relativeId(instr.left)!,
-        relativeId(instr.right)!,
+        relativeId(instr.left),
+        relativeId(instr.right),
         encodeICmpPredicate(instr.predicate),
       ]);
+    } else if (instr instanceof instructions.Call) {
+      const operands = [];
+
+      // TODO(indutny): return attributes
+      operands.push(0);  // attributes
+      operands.push(encodeCallFlags(instr));
+
+      // TODO(indutny): optimization flags
+      operands.push(this.typeBlock.get(instr.calleeSignature));
+      operands.push(relativeId(instr.callee));
+
+      for (const arg of instr.args) {
+        operands.push(relativeId(arg));
+      }
+
+      writer.writeUnabbrRecord(FUNCTION_CODE.INST_CALL, operands);
     } else {
       throw new Error(`Unsupported instruction: "${instr.opcode}"`);
     }

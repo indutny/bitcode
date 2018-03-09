@@ -1,4 +1,7 @@
+import * as assert from 'assert';
+
 import { CallingConv, Linkage, values } from 'bitcode-builder';
+import { CALL_FLAG_SHIFTS } from './constants';
 
 import instructions = values.instructions;
 
@@ -52,7 +55,7 @@ export function encodeSigned(value: number): number {
   }
 }
 
-export function encodeCastType(cast: instructions.CastType) {
+export function encodeCastType(cast: instructions.CastType): number {
   switch (cast) {
     case 'trunc': return 0;
     case 'zext': return 1;
@@ -71,7 +74,7 @@ export function encodeCastType(cast: instructions.CastType) {
   }
 }
 
-export function encodeBinopType(binop: instructions.BinopType) {
+export function encodeBinopType(binop: instructions.BinopType): number {
   switch (binop) {
     case 'add': return 0;
     case 'sub': return 1;
@@ -90,7 +93,8 @@ export function encodeBinopType(binop: instructions.BinopType) {
   }
 }
 
-export function encodeICmpPredicate(predicate: instructions.ICmpPredicate) {
+export function encodeICmpPredicate(predicate: instructions.ICmpPredicate)
+  : number {
   switch (predicate) {
     case 'eq': return 32;
     case 'ne': return 33;
@@ -103,4 +107,24 @@ export function encodeICmpPredicate(predicate: instructions.ICmpPredicate) {
     case 'sle': return 41;
     default: throw new Error(`Unsupported icmp predicate: "${predicate}"`);
   }
+}
+
+export function encodeCallFlags(call: instructions.Call): number {
+  let flags = 0;
+
+  flags |= encodeCConv(call.cconv) << CALL_FLAG_SHIFTS.CCONV;
+  if (call.callType === 'tail') {
+    flags |= 1 << CALL_FLAG_SHIFTS.TAIL;
+  } else if (call.callType === 'musttail') {
+    flags |= 1 << CALL_FLAG_SHIFTS.MUSTTAIL;
+  } else if (call.callType === 'notail') {
+    flags |= 1 << CALL_FLAG_SHIFTS.NOTAIL;
+  } else {
+    assert.strictEqual(call.callType, 'normal',
+      `Unexpected call type: "${call.callType}"`);
+  }
+
+  flags |= 1 << CALL_FLAG_SHIFTS.EXPLICIT_TYPE;
+
+  return flags;
 }

@@ -10,6 +10,8 @@ describe('bitcode/compiler', () => {
   });
 
   it('should compile a module', () => {
+    const extra = b.signature(b.void(), [ b.i(32) ]).declareFunction('extra');
+
     const fn = b.signature(b.i(32), [ b.i(32), b.i(32) ]).defineFunction(
       'fn_name',
       [ 'param1', 'param2' ],
@@ -27,6 +29,7 @@ describe('bitcode/compiler', () => {
     const cast = bb1.cast('zext', sum, b.i(64));
     const sum2 = bb1.binop('add', cast, b.i(64).val(123));
     const trunc = bb1.cast('trunc', sum2, b.i(32));
+    bb1.call(extra, [ trunc ]);
     bb1.ret(trunc);
 
     bb2.unreachable();
@@ -43,6 +46,7 @@ describe('bitcode/compiler', () => {
     glob.markConstant();
 
     m.add(fn);
+    m.add(extra);
     m.add(glob);
 
     const bc = m.build();

@@ -144,3 +144,11 @@ export const UNNAMED_ADDR = {
   NO: 0,
   UNNAMED_ADDR: 1,
 };
+
+export const CALL_FLAG_SHIFTS = {
+  CCONV: 1,
+  EXPLICIT_TYPE: 15,
+  MUSTTAIL: 14,
+  NOTAIL: 16,
+  TAIL: 0,
+};

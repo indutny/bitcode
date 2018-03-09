@@ -143,7 +143,9 @@ export class Enumerator {
     for (const instr of bb) {
       // All operands, except constants should be already enumerated
       for (const operand of instr) {
-        if (mode === EnumerateMode.CONSTANTS_ONLY && operand.isConstant()) {
+        if (mode === EnumerateMode.CONSTANTS_ONLY &&
+            operand.isConstant() &&
+            !operand.toConstant().isDeclaration()) {
           constList.push(operand.toConstant());
         }
         this.enumerateValue(operand, EnumerateMode.CONSTANTS_ONLY);
