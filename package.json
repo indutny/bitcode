@@ -28,6 +28,6 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "bitcode-builder": "^1.0.0-beta23"
+    "bitcode-builder": "git://github.com/indutny/bitcode-builder.git"
   }
 }

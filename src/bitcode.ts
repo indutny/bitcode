@@ -6,7 +6,7 @@ import { Buffer } from 'buffer';
 import { Abbr, BitStream } from './bitstream';
 import {
   BLOCK_ID, CONSTANTS_CODE, FIXED, FUNCTION_CODE, MODULE_CODE, UNNAMED_ADDR,
-  VBR, VISIBILITY,
+  VALUE_SYMTAB_CODE, VBR, VISIBILITY,
 } from './constants';
 import { ConstantList, Enumerator } from './enumerator';
 import { Strtab } from './strtab';
@@ -16,6 +16,7 @@ const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 const CONSTANTS_ABBR_ID_WIDTH = 5;
 const FUNCTION_ABBR_ID_WIDTH = 6;
+const VALUE_SYMTAB_ABBR_ID_WIDTH = 3;
 
 export class Module {
   private readonly fns: values.constants.Func[] = [];
@@ -151,6 +152,19 @@ export class Module {
         Abbr.vbr(VBR.VALUE_INDEX),  // left
         Abbr.vbr(VBR.VALUE_INDEX),  // right
         Abbr.fixed(FIXED.BINOP_TYPE),
+      ]),
+    ]);
+
+    info.set(BLOCK_ID.VALUE_SYMTAB, [
+      new Abbr('bbentry', [
+        Abbr.literal(VALUE_SYMTAB_CODE.BBENTRY),
+        Abbr.vbr(VBR.BLOCK_INDEX),
+        Abbr.array(Abbr.char6()),
+      ]),
+      new Abbr('entry', [
+        Abbr.literal(VALUE_SYMTAB_CODE.ENTRY),
+        Abbr.vbr(VBR.VALUE_INDEX),
+        Abbr.array(Abbr.char6()),
       ]),
     ]);
 
@@ -302,6 +316,23 @@ export class Module {
           this.buildInstruction(writer, instr);
         }
       }
+
+      // Write block/param names
+      writer.enterBlock(BLOCK_ID.VALUE_SYMTAB, VALUE_SYMTAB_ABBR_ID_WIDTH);
+
+      blocks.forEach((bb, index) => {
+        if (bb.name === undefined) {
+          return;
+        }
+
+        writer.writeRecord('bbentry', [ index, bb.name ]);
+      });
+
+      fn.args.forEach((arg, index) => {
+        writer.writeRecord('entry', [ this.enumerator.get(arg), arg.name ]);
+      });
+
+      writer.endBlock();
 
       writer.endBlock();
     }

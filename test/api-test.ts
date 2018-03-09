@@ -14,6 +14,7 @@ describe('bitcode/compiler', () => {
       'fn_name',
       [ 'param1', 'param2' ],
     );
+    fn.body.name = 'start';
 
     const sum = fn.body.binop('add', fn.getArgument('param1'),
       fn.getArgument('param2'));

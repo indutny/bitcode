@@ -5,6 +5,7 @@ export const BLOCK_ID = {
   MODULE: 8,
   STRTAB: 23,
   TYPE: 17,
+  VALUE_SYMTAB: 14,
 };
 
 // TODO(indutny): should be enum?
@@ -100,6 +101,13 @@ export const FUNCTION_CODE = {
   OPERAND_BUNDLE: 55,
 };
 
+export const VALUE_SYMTAB_CODE = {
+  BBENTRY: 2,
+  COMBINED_ENTRY: 5,
+  ENTRY: 1,
+  FNENTRY: 3,
+};
+
 export const FIXED = {
   BINOP_TYPE: 4,
   BOOL: 1,
@@ -113,6 +121,7 @@ export const VBR = {
   ARRAY_LENGTH: 8,
   ATTR_INDEX: 6,
   BLOCK_COUNT: 6,
+  BLOCK_INDEX: 8,
   CCONV: 5,
   INTEGER: 8,
   INT_WIDTH: 8,
