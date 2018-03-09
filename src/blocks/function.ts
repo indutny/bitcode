@@ -85,6 +85,12 @@ export class FunctionBlock extends Block {
         Abbr.vbr(VBR.ALIGNMENT),  // alignment
         Abbr.fixed(FIXED.BOOL),  // isVolatile
       ]),
+      new Abbr('getelementptr', [
+        Abbr.literal(FUNCTION_CODE.INST_GEP),
+        Abbr.fixed(FIXED.BOOL),  // inbounds
+        Abbr.vbr(VBR.TYPE_INDEX),  // sourceElementType
+        Abbr.array(Abbr.vbr(VBR.VALUE_INDEX)),  // operands
+      ]),
     ]);
 
     info.set(BLOCK_ID.VALUE_SYMTAB, [
@@ -205,6 +211,14 @@ export class FunctionBlock extends Block {
         relativeId(instr.value),
         instr.alignment === undefined ? 0 : 1 + Math.log2(instr.alignment),
         instr.isVolatile ? 1 : 0,
+      ]);
+    } else if (instr instanceof instructions.GetElementPtr) {
+      const operands = Array.from(instr).map(relativeId);
+
+      writer.writeRecord('getelementptr', [
+        instr.inbounds ? 1 : 0,
+        this.typeBlock.get(instr.ptr.ty.toPointer().to),
+        operands,
       ]);
     } else if (instr instanceof instructions.Call) {
       const operands = [];
