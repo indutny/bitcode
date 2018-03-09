@@ -1,3 +1,3 @@
 export { Abbr } from './abbr';
-export { BitStream } from './bitstream';
+export { BitStream, BlockInfoMap } from './bitstream';
 export { Block } from './block';

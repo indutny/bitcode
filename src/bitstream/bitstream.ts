@@ -31,12 +31,14 @@ interface IStackElem {
   offset: number;
 }
 
+export type BlockInfoMap = Map<number, Abbr[]>;
+
 export class BitStream {
   private readonly writer: BitWriter = new BitWriter();
   private readonly stack: IStackElem[] = [];
 
   // block id => abbreviations
-  private blockInfo: Map<number, Abbr[]> = new Map();
+  private blockInfo: BlockInfoMap = new Map();
 
   constructor() {
     this.writeDWord(MAGIC);
@@ -75,7 +77,7 @@ export class BitStream {
     return this;
   }
 
-  public writeBlockInfo(map: Map<number, Abbr[]>): BitStream {
+  public writeBlockInfo(map: BlockInfoMap): BitStream {
     if (map.size === 0) {
       return this;
     }

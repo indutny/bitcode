@@ -23,6 +23,7 @@ export class Enumerator {
   private globalConstants: RWConstantList = [];
   private functionConstants: Map<constants.Func, RWConstantList> =
     new Map();
+  private lastEmittedIndex: number = 0;
 
   public enumerate(input: IEnumeratorInput): void {
     // 1. Enumerate globals
@@ -69,6 +70,14 @@ export class Enumerator {
   public getFunctionConstants(fn: constants.Func): ConstantList {
     assert(this.functionConstants.has(fn), `Unexpected function: "${fn.name}"`);
     return this.functionConstants.get(fn)!;
+  }
+
+  // Ensure that values are emitted in the same order they were enumerated
+  public checkValueOrder(value: values.Value): void {
+    const index = this.get(value);
+    assert(index >= this.lastEmittedIndex,
+      'Invalid order of values (internal error)');
+    this.lastEmittedIndex = index;
   }
 
   // Private API
