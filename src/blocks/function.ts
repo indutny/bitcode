@@ -92,6 +92,17 @@ export class FunctionBlock extends Block {
         Abbr.vbr(VBR.TYPE_INDEX),  // sourceElementType
         Abbr.array(Abbr.vbr(VBR.VALUE_INDEX)),  // operands
       ]),
+      new Abbr('extractvalue', [
+        Abbr.literal(FUNCTION_CODE.INST_EXTRACTVAL),
+        Abbr.vbr(VBR.VALUE_INDEX),  // aggr
+        Abbr.vbr(VBR.INTEGER),  // index
+      ]),
+      new Abbr('insertvalue', [
+        Abbr.literal(FUNCTION_CODE.INST_INSERTVAL),
+        Abbr.vbr(VBR.VALUE_INDEX),  // aggr
+        Abbr.vbr(VBR.VALUE_INDEX),  // element
+        Abbr.vbr(VBR.INTEGER),  // index
+      ]),
     ]);
 
     info.set(BLOCK_ID.VALUE_SYMTAB, [
@@ -234,6 +245,17 @@ export class FunctionBlock extends Block {
         instr.inbounds ? 1 : 0,
         this.typeBlock.get(instr.ptr.ty.toPointer().to),
         operands,
+      ]);
+    } else if (instr instanceof instructions.InsertValue) {
+      writer.writeRecord('insertvalue', [
+        relativeId(instr.aggr),
+        relativeId(instr.element),
+        instr.index,
+      ]);
+    } else if (instr instanceof instructions.ExtractValue) {
+      writer.writeRecord('extractvalue', [
+        relativeId(instr.aggr),
+        instr.index,
       ]);
     } else if (instr instanceof instructions.Call) {
       const operands = [];

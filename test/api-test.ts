@@ -74,7 +74,19 @@ describe('bitcode/compiler', () => {
     // join
     const phi = bb5.phi({ fromBlock: bb3, value: left });
     phi.addEdge({ fromBlock: bb4, value: right });
-    bb5.ret(phi);
+
+    // Create a structure
+    const struct = b.struct('hello');
+    struct.addField(b.i(32), 'a');
+    struct.addField(b.i(32), 'b');
+    struct.finalize();
+
+    const i1 = bb5.insertvalue(struct.undef(), phi,
+      struct.lookupField('a').index);
+    const i2 = bb5.insertvalue(i1, phi, struct.lookupField('b').index);
+    const i3 = bb5.extractvalue(i2, struct.lookupField('a').index);
+
+    bb5.ret(i3);
 
     m.add(fn);
     m.add(extra);

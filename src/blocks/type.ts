@@ -156,7 +156,10 @@ export class TypeBlock extends Block {
       code = TYPE_CODE.STRUCT_NAMED;
     }
 
-    writer.writeUnabbrRecord(code, ty.fields.map((f) => this.get(f.ty)));
+    // TODO(indutny): packed structs support
+    const isPacked = 0;
+    writer.writeUnabbrRecord(code,
+      [ isPacked ].concat(ty.fields.map((f) => this.get(f.ty))));
   }
 
   private writeVoid(writer: BitStream, ty: types.Void): void {
