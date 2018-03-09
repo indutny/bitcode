@@ -12,12 +12,15 @@ enum EnumerateMode {
   CONSTANTS_ONLY,
 }
 
+type RWConstantList = values.constants.Constant[];
+export type ConstantList = ReadonlyArray<values.constants.Constant>;
+
 export class Enumerator {
   private map: Map<values.Value, number> = new Map();
   private index: number = 1;
-  private globalConstants: values.constants.Constant[] = [];
-  private functionConstants
-    : Map<values.constants.Func, values.constants.Constant[]> = new Map();
+  private globalConstants: RWConstantList = [];
+  private functionConstants: Map<values.constants.Func, RWConstantList> =
+    new Map();
 
   public enumerate(input: IEnumeratorInput): void {
     // 1. Enumerate globals
@@ -58,12 +61,11 @@ export class Enumerator {
     yield* this.map.keys();
   }
 
-  public getGlobalConstants(): ReadonlyArray<values.constants.Constant> {
+  public getGlobalConstants(): ConstantList {
     return this.globalConstants;
   }
 
-  public getFunctionConstants(fn: values.constants.Func)
-    : ReadonlyArray<values.constants.Constant> {
+  public getFunctionConstants(fn: values.constants.Func): ConstantList {
     assert(this.functionConstants.has(fn), `Unexpected function: "${fn.name}"`);
     return this.functionConstants.get(fn)!;
   }
@@ -97,7 +99,7 @@ export class Enumerator {
   }
 
   private enumerateFunction(fn: values.constants.Func): void {
-    const constants: values.constants.Constant[] = [];
+    const constants: RWConstantList = [];
 
     // Enumerate function constants first
     for (const bb of fn) {
@@ -122,7 +124,7 @@ export class Enumerator {
 
   private enumerateBlock(bb: values.BasicBlock,
                          mode: EnumerateMode,
-                         constants: values.constants.Constant[]): void {
+                         constants: RWConstantList): void {
     for (const instr of bb) {
       // All operands, except constants should be already enumerated
       for (const operand of instr) {

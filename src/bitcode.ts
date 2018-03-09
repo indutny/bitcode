@@ -7,7 +7,7 @@ import { Abbr, BitStream } from './bitstream';
 import {
   BLOCK_ID, CONSTANTS_CODE, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
 } from './constants';
-import { Enumerator } from './enumerator';
+import { ConstantList, Enumerator } from './enumerator';
 import { Strtab } from './strtab';
 import { TypeTable } from './type-table';
 
@@ -173,8 +173,11 @@ export class Module {
     }
   }
 
-  private buildConstants(writer: BitStream,
-                         list: ReadonlyArray<values.constants.Constant>): void {
+  private buildConstants(writer: BitStream, list: ConstantList): void {
+    if (list.length === 0) {
+      return;
+    }
+
     writer.enterBlock(BLOCK_ID.CONSTANTS, CONSTANTS_ABBR_ID_WIDTH);
     let lastType: types.Type | undefined;
     for (const c of list) {
