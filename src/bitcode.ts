@@ -4,14 +4,13 @@ import { Builder, types, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
-import { ConstantBlock, StrtabBlock } from './blocks';
+import { ConstantBlock, StrtabBlock, TypeBlock } from './blocks';
 import {
   BLOCK_ID, FIXED, FUNCTION_CODE, MODULE_CODE, UNNAMED_ADDR,
   VALUE_SYMTAB_CODE, VBR, VISIBILITY,
 } from './constants';
 import { encodeBinopType, encodeCConv, encodeLinkage } from './encoding';
 import { ConstantList, Enumerator } from './enumerator';
-import { TypeTable } from './type-table';
 
 import constants = values.constants;
 import instructions = values.instructions;
@@ -26,7 +25,7 @@ export class Module {
   private readonly decls: constants.Declaration[] = [];
   private readonly globals: values.Global[] = [];
   private readonly enumerator: Enumerator = new Enumerator();
-  private readonly typeTable: TypeTable = new TypeTable();
+  private readonly typeBlock: TypeBlock = new TypeBlock();
   private readonly strtab: StrtabBlock = new StrtabBlock();
 
   constructor(public readonly sourceName?: string) {
@@ -73,14 +72,14 @@ export class Module {
 
     // Add types from used values
     for (const value of this.enumerator) {
-      this.typeTable.add(value.ty);
+      this.typeBlock.add(value.ty);
     }
 
-    this.typeTable.build(writer);
+    this.typeBlock.build(writer);
 
     this.buildGlobals(writer);
 
-    const globalConstants = new ConstantBlock(this.enumerator, this.typeTable,
+    const globalConstants = new ConstantBlock(this.enumerator, this.typeBlock,
       this.enumerator.getGlobalConstants());
 
     globalConstants.build(writer);
@@ -189,7 +188,7 @@ export class Module {
       writer.writeRecord('global', [
         name.offset,
         name.length,
-        this.typeTable.get(g.ty),
+        this.typeBlock.get(g.ty),
         g.isConstant() ? 1 : 0,
         g.init === undefined ? 0 : 1 + this.enumerator.get(g.init),
         encodeLinkage(g.linkage),
@@ -234,7 +233,7 @@ export class Module {
       writer.writeRecord('decl', [
         name.offset,
         name.length,
-        this.typeTable.get(decl.ty),
+        this.typeBlock.get(decl.ty),
         encodeCConv(decl.cconv),
         decl.isFunction() ? 0 : 1,  // isDeclaration
         encodeLinkage(decl.linkage),
@@ -252,7 +251,7 @@ export class Module {
     for (const fn of this.fns) {
       writer.enterBlock(BLOCK_ID.FUNCTION, FUNCTION_ABBR_ID_WIDTH);
 
-      const fnConstants = new ConstantBlock(this.enumerator, this.typeTable,
+      const fnConstants = new ConstantBlock(this.enumerator, this.typeBlock,
         this.enumerator.getFunctionConstants(fn));
       fnConstants.build(writer);
 

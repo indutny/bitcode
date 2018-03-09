@@ -1,20 +1,20 @@
 import * as assert from 'assert';
 import { types } from 'bitcode-builder';
 
-import { Abbr, BitStream } from './bitstream';
-import { BLOCK_ID, TYPE_CODE, VBR } from './constants';
+import { Abbr, BitStream } from '../bitstream';
+import { BLOCK_ID, TYPE_CODE, VBR } from '../constants';
+import { Block } from './base';
 
 const TYPE_ABBR_ID_WIDTH = 4;
 
-export class TypeTable {
+export class TypeBlock extends Block {
   private readonly list: types.Type[] = [];
-  private isBuilt: boolean = false;
 
   // typeString => index in `list`
   private readonly map: Map<string, number> = new Map();
 
   public add(ty: types.Type): void {
-    assert(!this.isBuilt, 'TypeTable already built');
+    this.checkNotBuilt();
 
     const key = ty.typeString;
     if (this.map.has(ty.typeString)) {
@@ -50,9 +50,7 @@ export class TypeTable {
   }
 
   public build(writer: BitStream): void {
-    assert(!this.isBuilt, 'TypeTable already built');
-    this.isBuilt = true;
-
+    super.build(writer);
     writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
     writer.writeUnabbrRecord(TYPE_CODE.NUMENTRY, [ this.list.length ]);
     for (const ty of this.list) {

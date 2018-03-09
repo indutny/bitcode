@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream } from '../bitstream';
@@ -17,10 +16,9 @@ export class StrtabBlock extends Block {
   private readonly list: IStrtabEntry[] = [];
   private readonly map: Map<string, IStrtabEntry> = new Map();
   private totalSize: number = 0;
-  private isBuilt: boolean = false;
 
   public add(str: string): IStrtabEntry {
-    assert(!this.isBuilt, 'Strtab was already built');
+    this.checkNotBuilt();
 
     if (this.map.has(str)) {
       return this.map.get(str)!;
@@ -41,9 +39,7 @@ export class StrtabBlock extends Block {
   }
 
   public build(writer: BitStream): void {
-    assert(!this.isBuilt, 'Strtab was already built');
-    this.isBuilt = true;
-
+    super.build(writer);
     writer.enterBlock(BLOCK_ID.STRTAB, STRTAB_ABBR_ID_WIDTH);
 
     // TODO(indutny): can we do char6 here?

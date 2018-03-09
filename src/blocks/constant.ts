@@ -3,8 +3,8 @@ import { Abbr, BitStream, BlockInfoMap } from '../bitstream';
 import { BLOCK_ID, CONSTANTS_CODE, VBR } from '../constants';
 import { encodeSigned } from '../encoding';
 import { ConstantList, Enumerator } from '../enumerator';
-import { TypeTable } from '../type-table';
 import { Block } from './base';
+import { TypeBlock } from './type';
 
 const CONSTANTS_ABBR_ID_WIDTH = 5;
 
@@ -33,12 +33,14 @@ export class ConstantBlock extends Block {
   }
 
   constructor(private readonly enumerator: Enumerator,
-              private readonly typeTable: TypeTable,
+              private readonly typeBlock: TypeBlock,
               private readonly list: ConstantList) {
     super();
   }
 
   public build(writer: BitStream): void {
+    super.build(writer);
+
     const list = this.list;
     if (list.length === 0) {
       return;
@@ -48,7 +50,7 @@ export class ConstantBlock extends Block {
     let lastType: types.Type | undefined;
     for (const c of list) {
       if (lastType === undefined || !lastType.isEqual(c.ty)) {
-        writer.writeRecord('settype', [ this.typeTable.get(c.ty) ]);
+        writer.writeRecord('settype', [ this.typeBlock.get(c.ty) ]);
         lastType = c.ty;
       }
 
