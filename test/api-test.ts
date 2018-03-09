@@ -17,7 +17,8 @@ describe('bitcode/compiler', () => {
 
     const sum = fn.body.binop('add', fn.getArgument('param1'),
       fn.getArgument('param2'));
-    fn.body.ret(sum);
+    const sum2 = fn.body.binop('add', sum, b.i(32).val(123));
+    fn.body.ret(sum2);
 
     const arrTy = b.array(4, b.i(32));
     const glob = b.global(arrTy.ptr(), 'some_global', arrTy.val([

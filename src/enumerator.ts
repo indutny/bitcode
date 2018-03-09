@@ -106,13 +106,12 @@ export class Enumerator {
   private enumerateFunction(fn: values.constants.Func): void {
     const constants: RWConstantList = [];
 
-    // Enumerate function constants first
-    for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY, constants);
-    }
-
     for (const arg of fn.args) {
       this.enumerateValue(arg);
+    }
+
+    for (const bb of fn) {
+      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY, constants);
     }
 
     for (const bb of fn) {

@@ -242,6 +242,7 @@ export class Module {
   }
 
   private buildDeclarations(writer: BitStream): void {
+    // TODO(indutny): support unnamed_addr, others?
     writer.defineAbbr(new Abbr('decl', [
       Abbr.literal(MODULE_CODE.FUNCTION),
       Abbr.vbr(VBR.STRTAB_OFFSET),
