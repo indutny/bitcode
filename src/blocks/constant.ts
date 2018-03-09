@@ -32,9 +32,10 @@ export class ConstantBlock extends Block {
     ]);
   }
 
-  constructor(enumerator: Enumerator, typeTable: TypeTable,
+  constructor(private readonly enumerator: Enumerator,
+              private readonly typeTable: TypeTable,
               private readonly list: ConstantList) {
-    super(enumerator, typeTable);
+    super();
   }
 
   public build(writer: BitStream): void {

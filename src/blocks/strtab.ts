@@ -1,8 +1,9 @@
 import * as assert from 'assert';
 import { Buffer } from 'buffer';
 
-import { Abbr, BitStream } from './bitstream';
-import { BLOCK_ID, STRTAB_CODE } from './constants';
+import { Abbr, BitStream } from '../bitstream';
+import { BLOCK_ID, STRTAB_CODE } from '../constants';
+import { Block } from './base';
 
 const STRTAB_ABBR_ID_WIDTH = 3;
 
@@ -12,7 +13,7 @@ export interface IStrtabEntry {
   length: number;
 }
 
-export class Strtab {
+export class StrtabBlock extends Block {
   private readonly list: IStrtabEntry[] = [];
   private readonly map: Map<string, IStrtabEntry> = new Map();
   private totalSize: number = 0;

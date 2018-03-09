@@ -4,14 +4,13 @@ import { Builder, types, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
-import { ConstantBlock } from './blocks';
+import { ConstantBlock, StrtabBlock } from './blocks';
 import {
   BLOCK_ID, FIXED, FUNCTION_CODE, MODULE_CODE, UNNAMED_ADDR,
   VALUE_SYMTAB_CODE, VBR, VISIBILITY,
 } from './constants';
 import { encodeBinopType, encodeCConv, encodeLinkage } from './encoding';
 import { ConstantList, Enumerator } from './enumerator';
-import { Strtab } from './strtab';
 import { TypeTable } from './type-table';
 
 import constants = values.constants;
@@ -28,7 +27,7 @@ export class Module {
   private readonly globals: values.Global[] = [];
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeTable: TypeTable = new TypeTable();
-  private readonly strtab: Strtab = new Strtab();
+  private readonly strtab: StrtabBlock = new StrtabBlock();
 
   constructor(public readonly sourceName?: string) {
   }
