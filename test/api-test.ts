@@ -43,6 +43,9 @@ describe('bitcode/compiler', () => {
     const cmp = fn.body.icmp('eq', sum, b.i(32).val(3));
     fn.body.branch(cmp, bb1, bb2);
 
+    // false - unreachable
+    bb2.unreachable();
+
     // true
     const cast = bb1.cast('zext', sum, b.i(64));
     const sum2 = bb1.binop('add', cast, b.i(64).val(123));
@@ -52,10 +55,26 @@ describe('bitcode/compiler', () => {
     const cell = bb1.load(ptr, 32, true);
 
     bb1.call(extra, [ trunc, cell ]);
-    bb1.ret(trunc);
 
-    // false - unreachable
-    bb2.unreachable();
+    // create branch and phi
+    const bb3 = fn.createBlock('left');
+    const bb4 = fn.createBlock('right');
+    const bb5 = fn.createBlock('join');
+    const cmp2 = bb1.icmp('eq', cell, b.i(32).val(2));
+    bb1.branch(cmp2, bb3, bb4);
+
+    // left
+    const left = bb3.binop('sub', trunc, b.i(32).val(3));
+    bb3.jmp(bb5);
+
+    // right
+    const right = bb4.binop('mul', trunc, b.i(32).val(4));
+    bb4.jmp(bb5);
+
+    // join
+    const phi = bb5.phi({ fromBlock: bb3, value: left });
+    phi.addEdge({ fromBlock: bb4, value: right });
+    bb5.ret(phi);
 
     m.add(fn);
     m.add(extra);

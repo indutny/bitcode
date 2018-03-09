@@ -7,6 +7,7 @@ import {
 } from '../constants';
 import {
   encodeBinopType, encodeCallFlags, encodeCastType, encodeICmpPredicate,
+  encodeSigned,
 } from '../encoding';
 import { Enumerator } from '../enumerator';
 import { Block } from './base';
@@ -178,6 +179,20 @@ export class FunctionBlock extends Block {
       ]);
     } else if (instr instanceof instructions.Unreachable) {
       writer.writeRecord('unreachable', []);
+
+    // Phi
+    } else if (instr instanceof instructions.Phi) {
+      const operands = [ this.typeBlock.get(instr.ty) ];
+
+      const edges = instr.edges;
+      for (const edge of edges) {
+        assert(blockIds.get(edge.fromBlock), 'Unknown PHI fromBlock');
+
+        operands.push(encodeSigned(relativeId(edge.value)));
+        operands.push(blockIds.get(edge.fromBlock)!);
+      }
+
+      writer.writeUnabbrRecord(FUNCTION_CODE.INST_PHI, operands);
 
     // Regular instructions
     } else if (instr instanceof instructions.Cast) {
