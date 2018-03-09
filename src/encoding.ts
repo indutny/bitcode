@@ -89,3 +89,18 @@ export function encodeBinopType(binop: instructions.BinopType) {
     default: throw new Error(`Unsupported binop type: "${binop}"`);
   }
 }
+
+export function encodeICmpPredicate(predicate: instructions.ICmpPredicate) {
+  switch (predicate) {
+    case 'eq': return 32;
+    case 'ne': return 33;
+    case 'ugt': return 34;
+    case 'ult': return 36;
+    case 'ule': return 37;
+    case 'sgt': return 38;
+    case 'sge': return 39;
+    case 'slt': return 40;
+    case 'sle': return 41;
+    default: throw new Error(`Unsupported icmp predicate: "${predicate}"`);
+  }
+}

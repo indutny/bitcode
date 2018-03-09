@@ -19,11 +19,17 @@ describe('bitcode/compiler', () => {
     const sum = fn.body.binop('add', fn.getArgument('param1'),
       fn.getArgument('param2'));
 
-    const bb1 = fn.createBlock('bb1');
-    fn.body.jmp(bb1);
+    const bb1 = fn.createBlock('on_true');
+    const bb2 = fn.createBlock('on_false');
+    const cmp = fn.body.icmp('eq', sum, b.i(32).val(3));
+    fn.body.branch(cmp, bb1, bb2);
 
-    const sum2 = bb1.binop('add', sum, b.i(32).val(123));
-    bb1.ret(sum2);
+    const cast = bb1.cast('zext', sum, b.i(64));
+    const sum2 = bb1.binop('add', cast, b.i(64).val(123));
+    const trunc = bb1.cast('trunc', sum2, b.i(32));
+    bb1.ret(trunc);
+
+    bb2.unreachable();
 
     const arrTy = b.array(4, b.i(32));
     const glob = b.global(arrTy.ptr(), 'some_global', arrTy.val([

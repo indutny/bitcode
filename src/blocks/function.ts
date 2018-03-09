@@ -5,7 +5,9 @@ import { Abbr, BitStream, BlockInfoMap } from '../bitstream';
 import {
   BLOCK_ID, FIXED, FUNCTION_CODE, VALUE_SYMTAB_CODE, VBR,
 } from '../constants';
-import { encodeBinopType } from '../encoding';
+import {
+  encodeBinopType, encodeCastType, encodeICmpPredicate,
+} from '../encoding';
 import { Enumerator } from '../enumerator';
 import { Block } from './base';
 import { ConstantBlock } from './constant';
@@ -25,6 +27,9 @@ export class FunctionBlock extends Block {
         Abbr.literal(FUNCTION_CODE.DECLAREBLOCKS),
         Abbr.vbr(VBR.BLOCK_COUNT),
       ]),
+
+      // Terminators
+
       new Abbr('ret_void', [
         Abbr.literal(FUNCTION_CODE.INST_RET),
       ]),
@@ -32,21 +37,39 @@ export class FunctionBlock extends Block {
         Abbr.literal(FUNCTION_CODE.INST_RET),
         Abbr.vbr(VBR.VALUE_INDEX),
       ]),
+      new Abbr('jump', [
+        Abbr.literal(FUNCTION_CODE.INST_BR),
+        Abbr.vbr(VBR.BLOCK_INDEX),  // target
+      ]),
+      new Abbr('branch', [
+        Abbr.literal(FUNCTION_CODE.INST_BR),
+        Abbr.vbr(VBR.BLOCK_INDEX),  // onTrue
+        Abbr.vbr(VBR.BLOCK_INDEX),  // onFalse
+        Abbr.vbr(VBR.VALUE_INDEX),  // condition
+      ]),
+      new Abbr('unreachable', [
+        Abbr.literal(FUNCTION_CODE.INST_UNREACHABLE),
+      ]),
+
+      // Regular instructions
+
+      new Abbr('cast', [
+        Abbr.literal(FUNCTION_CODE.INST_CAST),
+        Abbr.vbr(VBR.VALUE_INDEX),  // value
+        Abbr.vbr(VBR.TYPE_INDEX),  // to type
+        Abbr.fixed(FIXED.CAST_TYPE),
+      ]),
       new Abbr('binop', [
         Abbr.literal(FUNCTION_CODE.INST_BINOP),
         Abbr.vbr(VBR.VALUE_INDEX),  // left
         Abbr.vbr(VBR.VALUE_INDEX),  // right
         Abbr.fixed(FIXED.BINOP_TYPE),
       ]),
-      new Abbr('jump', [
-        Abbr.literal(FUNCTION_CODE.INST_BR),
-        Abbr.vbr(VBR.BLOCK_INDEX),  // target
-      ]),
-      new Abbr('br', [
-        Abbr.literal(FUNCTION_CODE.INST_BR),
-        Abbr.vbr(VBR.BLOCK_INDEX),  // onTrue
-        Abbr.vbr(VBR.BLOCK_INDEX),  // onFalse
-        Abbr.vbr(VBR.VALUE_INDEX),  // condition
+      new Abbr('icmp', [
+        Abbr.literal(FUNCTION_CODE.INST_CMP),
+        Abbr.vbr(VBR.VALUE_INDEX),  // left
+        Abbr.vbr(VBR.VALUE_INDEX),  // right
+        Abbr.fixed(FIXED.PREDICATE),  // predicate
       ]),
     ]);
 
@@ -107,24 +130,51 @@ export class FunctionBlock extends Block {
       return instrId - this.enumerator.get(operand);
     };
 
-    // TODO(indutny): support forward references
+    // TODO(indutny): support forward references in non-Phi instructions
+
+    // Terminators
     if (instr instanceof instructions.Ret) {
       if (instr.operand === undefined) {
         writer.writeRecord('ret_void', []);
       } else {
         writer.writeRecord('ret', [ relativeId(instr.operand) ]);
       }
+    } else if (instr instanceof instructions.Jump) {
+      assert(blockIds.has(instr.target), 'Unknown block');
+
+      writer.writeRecord('jump', [
+        blockIds.get(instr.target)!,
+      ]);
+    } else if (instr instanceof instructions.Branch) {
+      assert(blockIds.has(instr.onTrue), 'Unknown block');
+      assert(blockIds.has(instr.onFalse), 'Unknown block');
+
+      writer.writeRecord('branch', [
+        blockIds.get(instr.onTrue)!,
+        blockIds.get(instr.onFalse)!,
+        relativeId(instr.condition),
+      ]);
+    } else if (instr instanceof instructions.Unreachable) {
+      writer.writeRecord('unreachable', []);
+
+    // Regular instructions
+    } else if (instr instanceof instructions.Cast) {
+      writer.writeRecord('cast', [
+        relativeId(instr.operand),
+        this.typeBlock.get(instr.targetType),
+        encodeCastType(instr.castType),
+      ]);
     } else if (instr instanceof instructions.Binop) {
       writer.writeRecord('binop', [
         relativeId(instr.left),
         relativeId(instr.right),
         encodeBinopType(instr.binopType),
       ]);
-    } else if (instr instanceof instructions.Jump) {
-      assert(blockIds.has(instr.target), 'Unknown block');
-
-      writer.writeRecord('jump', [
-        blockIds.get(instr.target)!,
+    } else if (instr instanceof instructions.ICmp) {
+      writer.writeRecord('icmp', [
+        relativeId(instr.left)!,
+        relativeId(instr.right)!,
+        encodeICmpPredicate(instr.predicate),
       ]);
     } else {
       throw new Error(`Unsupported instruction: "${instr.opcode}"`);

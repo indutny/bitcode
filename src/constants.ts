@@ -111,8 +111,10 @@ export const VALUE_SYMTAB_CODE = {
 export const FIXED = {
   BINOP_TYPE: 4,
   BOOL: 1,
+  CAST_TYPE: 4,
   CHAR: 8,
   LINKAGE: 4,
+  PREDICATE: 6,
   VISIBILITY: 2,
 };
 
