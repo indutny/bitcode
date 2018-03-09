@@ -19,7 +19,14 @@ describe('bitcode/compiler', () => {
       fn.getArgument('param2'));
     fn.body.ret(sum);
 
-    const glob = b.global(b.i(8).ptr(), 'some_global', b.i(8).val(0xffffffff));
+    const arrTy = b.array(4, b.i(32));
+    const glob = b.global(arrTy.ptr(), 'some_global', arrTy.val([
+      b.i(32).val(1),
+      b.i(32).val(2),
+      b.i(32).val(-2),
+      b.i(32).val(-1),
+    ]));
+
     glob.linkage = 'internal';
     glob.markConstant();
 

@@ -128,6 +128,10 @@ export class Module {
       new Abbr('undef', [
         Abbr.literal(CONSTANTS_CODE.UNDEF),
       ]),
+      new Abbr('aggr', [
+        Abbr.literal(CONSTANTS_CODE.AGGREGATE),
+        Abbr.array(Abbr.vbr(VBR.VALUE_INDEX)),
+      ]),
     ]);
 
     info.set(BLOCK_ID.FUNCTION, [
@@ -185,7 +189,7 @@ export class Module {
         name.length,
         this.typeTable.get(g.ty),
         g.isConstant() ? 1 : 0,
-        g.init === undefined ? 0 : this.enumerator.get(g.init),
+        g.init === undefined ? 0 : 1 + this.enumerator.get(g.init),
         this.encodeLinkage(g.linkage),
         0,  // alignment
         VISIBILITY.DEFAULT,
@@ -204,7 +208,7 @@ export class Module {
     writer.enterBlock(BLOCK_ID.CONSTANTS, CONSTANTS_ABBR_ID_WIDTH);
     let lastType: types.Type | undefined;
     for (const c of list) {
-      if (lastType !== c.ty) {
+      if (lastType === undefined || !lastType.isEqual(c.ty)) {
         writer.writeRecord('settype', [ this.typeTable.get(c.ty) ]);
         lastType = c.ty;
       }
@@ -217,11 +221,21 @@ export class Module {
         writer.writeRecord('null', []);
       } else if (c.isUndef()) {
         writer.writeRecord('undef', []);
+      } else if (c.isArray()) {
+        const elems = c.toArray().elems;
+        writer.writeRecord('aggr', [ elems.map((e) => {
+          return this.enumerator.get(e);
+        }) ]);
+      } else if (c.isArray()) {
+        const fields = c.toStruct().fields;
+        writer.writeRecord('aggr', [ fields.map((e) => {
+          return this.enumerator.get(e);
+        }) ]);
       } else if (c.isMetadata()) {
         // TODO(indutny): emit metadata, but not here
+        throw new Error('Implement me!');
       } else {
-        // TODO(indutny): arrays, structs
-        throw new Error('Constant encoding not implemented yet');
+        throw new Error(`Unexpected constant value: "${c.constructor.name}"`);
       }
     }
     writer.endBlock();

@@ -17,7 +17,7 @@ export type ConstantList = ReadonlyArray<values.constants.Constant>;
 
 export class Enumerator {
   private map: Map<values.Value, number> = new Map();
-  private index: number = 1;
+  private index: number = 0;
   private globalConstants: RWConstantList = [];
   private functionConstants: Map<values.constants.Func, RWConstantList> =
     new Map();
@@ -31,8 +31,7 @@ export class Enumerator {
     // 2. Their initialization values
     for (const g of input.globals) {
       if (g.init) {
-        this.enumerateConst(g.init);
-        this.globalConstants.push(g.init);
+        this.enumerateGlobalConst(g.init);
       }
     }
 
@@ -89,12 +88,18 @@ export class Enumerator {
     }
   }
 
-  private enumerateConst(c: values.constants.Constant): void {
-    if (c.isFunction()) {
-      this.enumerateFunction(c.toFunction());
-    } else if (c.isDeclaration()) {
-      this.enumerateDeclaration(c.toDeclaration());
+  private enumerateGlobalConst(c: values.constants.Constant) {
+    if (c.isArray()) {
+      for (const elem of c.toArray().elems) {
+        this.enumerateGlobalConst(elem);
+      }
+    } else if (c.isStruct()) {
+      for (const field of c.toStruct().fields) {
+        this.enumerateGlobalConst(field);
+      }
     }
+
+    this.globalConstants.push(c);
     this.enumerateValue(c);
   }
 
