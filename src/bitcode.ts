@@ -4,7 +4,9 @@ import { Builder, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
-import { ConstantBlock, FunctionBlock, StrtabBlock, TypeBlock } from './blocks';
+import {
+  ConstantBlock, FunctionBlock, ParamAttrBlock, StrtabBlock, TypeBlock,
+} from './blocks';
 import {
   BLOCK_ID, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
 } from './constants';
@@ -24,6 +26,7 @@ export class Module {
   private readonly globals: values.Global[] = [];
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeBlock: TypeBlock = new TypeBlock();
+  private readonly paramAttrBlock: ParamAttrBlock = new ParamAttrBlock();
   private readonly strtab: StrtabBlock = new StrtabBlock();
 
   constructor(public readonly sourceName?: string) {
@@ -74,6 +77,18 @@ export class Module {
     }
 
     this.typeBlock.build(writer);
+
+    // Add attributes from declarations
+    for (const decl of this.decls) {
+      this.paramAttrBlock.add(decl);
+    }
+
+    // Add attributes from functions
+    for (const fn of this.fns) {
+      this.paramAttrBlock.add(fn);
+    }
+
+    this.paramAttrBlock.build(writer);
 
     this.buildGlobals(writer);
 

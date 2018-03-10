@@ -132,9 +132,9 @@ export class Enumerator {
     this.functionConstants.set(fn, constList);
   }
 
-  private enumerateDeclaration(fn: constants.Declaration): void {
+  private enumerateDeclaration(decl: constants.Declaration): void {
     // Nothing special, so far
-    this.enumerateValue(fn);
+    this.enumerateValue(decl);
   }
 
   private enumerateBlock(bb: values.BasicBlock,
