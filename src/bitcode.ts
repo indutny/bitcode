@@ -15,6 +15,7 @@ import { Enumerator } from './enumerator';
 
 import constants = values.constants;
 
+const MAGIC = 0xdec04342;
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 
@@ -45,7 +46,9 @@ export class Module {
   }
 
   public build(): Buffer {
-    const writer: BitStream = new BitStream();
+    const writer: BitStream = new BitStream({
+      magic: MAGIC,
+    });
 
     writer.enterBlock(BLOCK_ID.MODULE, MODULE_ABBR_ID_WIDTH);
     writer.writeUnabbrRecord(MODULE_CODE.VERSION, [ VERSION ]);

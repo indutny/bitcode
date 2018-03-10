@@ -9,7 +9,7 @@ describe('bitcode/bitstream', () => {
   });
 
   function check(s: BitStream, expected: string): void {
-    assert.strictEqual(s.end().slice(4).toString('hex'), expected);
+    assert.strictEqual(s.end().toString('hex'), expected);
   }
 
   describe('32-bit vbr', () => {

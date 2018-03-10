@@ -5,8 +5,6 @@ import { Abbr } from './abbr';
 import { Block } from './block';
 import { VBRValue } from './vbr-value';
 
-const MAGIC = 0xdec04342;
-
 const ROOT_ABBR_ID_WIDTH = 2;
 const BLOCK_ID_WIDTH = 8;
 const NEW_ABBR_ID_WIDTH_WIDTH = 4;
@@ -31,6 +29,10 @@ interface IStackElem {
   offset: number;
 }
 
+interface IBitStreamOptions {
+  magic: number | undefined;
+}
+
 export type BlockInfoMap = Map<number, Abbr[]>;
 
 export class BitStream {
@@ -40,8 +42,10 @@ export class BitStream {
   // block id => abbreviations
   private blockInfo: BlockInfoMap = new Map();
 
-  constructor() {
-    this.writeDWord(MAGIC);
+  constructor(options?: IBitStreamOptions) {
+    if (options !== undefined && options.magic !== undefined) {
+      this.writeDWord(options.magic);
+    }
   }
 
   public enterBlock(id: number, abbrIDWidth: number): BitStream {
