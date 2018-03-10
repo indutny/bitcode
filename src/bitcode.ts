@@ -5,7 +5,8 @@ import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
 import {
-  ConstantBlock, FunctionBlock, ParamAttrBlock, StrtabBlock, TypeBlock,
+  ConstantBlock, FunctionBlock, MetadataBlock, ParamAttrBlock, StrtabBlock,
+  TypeBlock,
 } from './blocks';
 import {
   BLOCK_ID, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
@@ -143,6 +144,7 @@ export class Module {
 
     ConstantBlock.buildInfo(info);
     FunctionBlock.buildInfo(info);
+    MetadataBlock.buildInfo(info);
 
     writer.writeBlockInfo(info);
   }

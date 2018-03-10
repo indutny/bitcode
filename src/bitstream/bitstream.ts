@@ -29,7 +29,7 @@ interface IStackElem {
   offset: number;
 }
 
-interface IBitStreamOptions {
+export interface IBitStreamOptions {
   magic: number | undefined;
 }
 
