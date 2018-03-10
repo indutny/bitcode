@@ -78,14 +78,19 @@ export class Module {
 
     this.typeBlock.build(writer);
 
+    // Add attributes from globals
+    for (const global of this.globals) {
+      this.paramAttrBlock.addGlobal(global);
+    }
+
     // Add attributes from declarations
     for (const decl of this.decls) {
-      this.paramAttrBlock.add(decl);
+      this.paramAttrBlock.addDecl(decl);
     }
 
     // Add attributes from functions
     for (const fn of this.fns) {
-      this.paramAttrBlock.add(fn);
+      this.paramAttrBlock.addDecl(fn);
     }
 
     this.paramAttrBlock.build(writer);
@@ -167,6 +172,8 @@ export class Module {
 
       this.enumerator.checkValueOrder(g);
 
+      const attributes = this.paramAttrBlock.get(g);
+
       writer.writeRecord('global', [
         name.offset,
         name.length,
@@ -176,7 +183,7 @@ export class Module {
         encodeLinkage(g.linkage),
         0,  // alignment
         VISIBILITY.DEFAULT,
-        0,  // TODO(indutny): attributes
+        attributes === undefined ? 0 : 1 + attributes,
         // dso_local
         (g.linkage === 'private' || g.linkage === 'internal') ? 1 : 0,
       ]);
@@ -212,6 +219,8 @@ export class Module {
 
       this.enumerator.checkValueOrder(decl);
 
+      const attributes = this.paramAttrBlock.get(decl);
+
       writer.writeRecord('decl', [
         name.offset,
         name.length,
@@ -219,7 +228,7 @@ export class Module {
         encodeCConv(decl.cconv),
         decl.isFunction() ? 0 : 1,  // isDeclaration
         encodeLinkage(decl.linkage),
-        0,  // TODO(indutny): attributes
+        attributes === undefined ? 0 : 1 + attributes,
         0,  // TODO(indutny): alignment
         VISIBILITY.DEFAULT,
 

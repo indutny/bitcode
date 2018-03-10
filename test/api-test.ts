@@ -20,6 +20,7 @@ describe('bitcode/compiler', () => {
 
     glob.linkage = 'internal';
     glob.markConstant();
+    glob.attrs.add([ { key: 'global', value: 'attribute' } ]);
 
     // Just an empty declaration
     const extra = b.signature(b.void(), [
@@ -31,6 +32,10 @@ describe('bitcode/compiler', () => {
       'fn_name',
       [ 'param1', 'param2' ],
     );
+
+    fn.attrs.add([ 'nounwind', 'noinline' ]);
+    fn.paramAttrs[1].add([ { key: 'custom-stuff', value: 'what else' } ]);
+
     fn.body.name = 'start';
 
     // sum = param1 + param2

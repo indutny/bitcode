@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 
 import { CallingConv, Linkage, values } from 'bitcode-builder';
-import { CALL_FLAG_SHIFTS } from './constants';
+import { CALL_FLAG_SHIFTS, KNOWN_ATTRIBUTES } from './constants';
 
 import instructions = values.instructions;
 
@@ -127,4 +127,10 @@ export function encodeCallFlags(call: instructions.Call): number {
   flags |= 1 << CALL_FLAG_SHIFTS.EXPLICIT_TYPE;
 
   return flags;
+}
+
+export function encodeAttributeKey(attrKey: string): number | undefined {
+  if (KNOWN_ATTRIBUTES.hasOwnProperty(attrKey)) {
+    return KNOWN_ATTRIBUTES[attrKey]!;
+  }
 }
