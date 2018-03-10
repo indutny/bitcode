@@ -33,7 +33,7 @@ interface IParamGroup {
 
 type ParamEntry = GroupId[];
 
-type ParamEntryIndex = number;
+export type ParamEntryIndex = number;
 
 const RET_ATTR_INDEX = 0;
 const FN_ATTR_INDEX = 0xffffffff;
