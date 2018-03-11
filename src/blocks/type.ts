@@ -64,7 +64,6 @@ export class TypeBlock extends Block {
     writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
     writer.writeUnabbrRecord(TYPE_CODE.NUMENTRY, [ list.length ]);
     for (const ty of list) {
-      console.log('write', ty.typeString);
       this.write(writer, ty);
     }
     writer.endBlock(BLOCK_ID.TYPE);
