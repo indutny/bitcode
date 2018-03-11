@@ -10,6 +10,10 @@ export abstract class Block {
     this.isBuilt = true;
   }
 
+  protected checkBuilt(): void {
+    assert(this.isBuilt, 'Block wasn\'t built yet');
+  }
+
   protected checkNotBuilt(): void {
     assert(!this.isBuilt, 'Block already built');
   }

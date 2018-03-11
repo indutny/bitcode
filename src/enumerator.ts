@@ -2,6 +2,19 @@ import * as assert from 'assert';
 import { values } from 'bitcode-builder';
 
 import constants = values.constants;
+import Constant = constants.Constant;
+import Metadata = constants.Metadata;
+
+enum EnumerationMode {
+  ALL,
+  CONSTANTS_ONLY,
+}
+
+interface IEnumerationState {
+  mode: EnumerationMode;
+  constants: Constant[];
+  metadata: Metadata[];
+}
 
 export interface IEnumeratorInput {
   decls: ReadonlyArray<constants.Declaration>;
@@ -9,21 +22,18 @@ export interface IEnumeratorInput {
   globals: ReadonlyArray<values.Global>;
 }
 
-enum EnumerateMode {
-  ALL,
-  CONSTANTS_ONLY,
-}
-
-type RWConstantList = constants.Constant[];
-export type ConstantList = ReadonlyArray<constants.Constant>;
+export type ConstantList = ReadonlyArray<Constant>;
 
 export class Enumerator {
   private map: Map<values.Value, number> = new Map();
   private index: number = 0;
-  private globalConstants: RWConstantList = [];
-  private functionConstants: Map<constants.Func, RWConstantList> =
-    new Map();
+  private globalConstants: Constant[] = [];
+  private functionConstants: Map<constants.Func, Constant[]> = new Map();
+  private functionMetadata: Map<constants.Func, Metadata[]> = new Map();
   private lastEmittedIndex: number = 0;
+
+  private constList: Constant[] | undefined;
+  private metadataList: Metadata[] | undefined;
 
   public enumerate(input: IEnumeratorInput): void {
     // 1. Enumerate globals
@@ -72,6 +82,11 @@ export class Enumerator {
     return this.functionConstants.get(fn)!;
   }
 
+  public getFunctionMetadata(fn: constants.Func): ReadonlyArray<Metadata> {
+    assert(this.functionMetadata.has(fn), `Unexpected function: "${fn.name}"`);
+    return this.functionMetadata.get(fn)!;
+  }
+
   // Ensure that values are emitted in the same order they were enumerated
   public checkValueOrder(value: values.Value): void {
     const index = this.get(value);
@@ -83,12 +98,17 @@ export class Enumerator {
   // Private API
 
   private enumerateValue(value: values.Value,
-                         mode: EnumerateMode = EnumerateMode.ALL): void {
+                         mode: EnumerationMode = EnumerationMode.ALL): void {
+    if (this.constList !== undefined && value.isConstant() &&
+        !value.toConstant().isDeclaration()) {
+      this.constList.push(value.toConstant());
+    }
+
     if (this.map.has(value)) {
       return;
     }
 
-    if (mode === EnumerateMode.CONSTANTS_ONLY && !value.isConstant()) {
+    if (mode === EnumerationMode.CONSTANTS_ONLY && !value.isConstant()) {
       return;
     }
 
@@ -99,7 +119,7 @@ export class Enumerator {
     }
   }
 
-  private enumerateGlobalConst(c: constants.Constant) {
+  private enumerateGlobalConst(c: Constant): void {
     if (c.isArray()) {
       for (const elem of c.toArray().elems) {
         this.enumerateGlobalConst(elem);
@@ -110,26 +130,37 @@ export class Enumerator {
       }
     }
 
+    // TODO(indutny): global metadata
     this.globalConstants.push(c);
     this.enumerateValue(c);
   }
 
   private enumerateFunction(fn: constants.Func): void {
-    const constList: RWConstantList = [];
+    const constList: Constant[] = [];
+    const metadataList: Metadata[] = [];
 
     for (const arg of fn.args) {
       this.enumerateValue(arg);
     }
 
+    this.constList = constList;
+    this.metadataList = metadataList;
+
+    // Enumerate constants and metadata first
     for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.CONSTANTS_ONLY, constList);
+      this.enumerateBlock(bb, EnumerationMode.CONSTANTS_ONLY);
     }
 
+    this.constList = undefined;
+    this.metadataList = undefined;
+
+    // All instructions later
     for (const bb of fn) {
-      this.enumerateBlock(bb, EnumerateMode.ALL, constList);
+      this.enumerateBlock(bb, EnumerationMode.ALL);
     }
 
     this.functionConstants.set(fn, constList);
+    this.functionMetadata.set(fn, metadataList);
   }
 
   private enumerateDeclaration(decl: constants.Declaration): void {
@@ -137,21 +168,39 @@ export class Enumerator {
     this.enumerateValue(decl);
   }
 
-  private enumerateBlock(bb: values.BasicBlock,
-                         mode: EnumerateMode,
-                         constList: RWConstantList): void {
+  private enumerateBlock(bb: values.BasicBlock, mode: EnumerationMode): void {
     for (const instr of bb) {
       // All operands, except constants should be already enumerated
       for (const operand of instr) {
-        if (mode === EnumerateMode.CONSTANTS_ONLY &&
-            operand.isConstant() &&
-            !operand.toConstant().isDeclaration()) {
-          constList.push(operand.toConstant());
-        }
-        this.enumerateValue(operand, EnumerateMode.CONSTANTS_ONLY);
+        this.enumerateValue(operand, EnumerationMode.CONSTANTS_ONLY);
+      }
+
+      if (mode === EnumerationMode.CONSTANTS_ONLY) {
+        instr.metadata.forEach((metadata) => {
+          this.enumerateMetadata(metadata);
+        });
       }
 
       this.enumerateValue(instr, mode);
+    }
+  }
+
+  private enumerateMetadata(metadata: Metadata): void {
+    if (this.metadataList !== undefined) {
+      this.metadataList.push(metadata);
+    }
+
+    // Tuple
+    if (Array.isArray(metadata.value)) {
+      metadata.value.forEach((subMeta) => this.enumerateMetadata(subMeta));
+
+    // String
+    } else if (typeof metadata.value === 'string') {
+      // no-op
+
+    // Constant
+    } else {
+      this.enumerateValue(metadata.value as Constant);
     }
   }
 }

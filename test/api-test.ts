@@ -46,7 +46,12 @@ describe('bitcode/compiler', () => {
     const bb1 = fn.createBlock('on_true');
     const bb2 = fn.createBlock('on_false');
     const cmp = fn.body.icmp('eq', sum, b.i(32).val(3));
-    fn.body.branch(cmp, bb1, bb2);
+    const branch = fn.body.branch(cmp, bb1, bb2);
+    branch.metadata.set('prof', b.metadata([
+      b.metadata('branch_weights'),
+      b.metadata(b.i(32).val(2)),
+      b.metadata(b.i(32).val(1)),
+    ]));
 
     // false - unreachable
     bb2.unreachable();

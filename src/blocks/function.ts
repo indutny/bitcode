@@ -12,6 +12,7 @@ import {
 import { Enumerator } from '../enumerator';
 import { Block } from './base';
 import { ConstantBlock } from './constant';
+import { MetadataBlock } from './metadata';
 import { TypeBlock } from './type';
 
 import constants = values.constants;
@@ -135,6 +136,10 @@ export class FunctionBlock extends Block {
     const fnConstants = new ConstantBlock(this.enumerator, this.typeBlock,
       this.enumerator.getFunctionConstants(fn));
     fnConstants.build(writer);
+
+    const fnMetadata = new MetadataBlock(this.enumerator, this.typeBlock,
+      this.enumerator.getFunctionMetadata(fn));
+    fnMetadata.build(writer);
 
     const blocks: ReadonlyArray<BasicBlock> = Array.from(fn);
     const blockIds: Map<BasicBlock, number> = new Map();

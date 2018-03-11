@@ -2,6 +2,8 @@
 export const BLOCK_ID = {
   CONSTANTS: 11,
   FUNCTION: 12,
+  METADATA: 15,
+  METADATA_ATTACHMENT: 16,
   MODULE: 8,
   PARAMATTR: 9,
   PARAMATTR_GROUP: 10,
@@ -118,6 +120,12 @@ export const PARAMATTR_GROUP_CODE = {
   ENTRY: 3,
 };
 
+export const METADATA_CODE = {
+  NODE: 3,
+  STRINGS: 35,
+  VALUE: 2,
+};
+
 export const FIXED = {
   BINOP_TYPE: 4,
   BOOL: 1,
@@ -137,6 +145,9 @@ export const VBR = {
   CCONV: 5,
   INTEGER: 8,
   INT_WIDTH: 8,
+  METADATA_INDEX: 6,
+  METADATA_STRING_COUNT: 6,
+  METADATA_STRING_OFF: 6,
   STRTAB_LENGTH: 6,
   STRTAB_OFFSET: 8,
   TYPE_INDEX: 6,
