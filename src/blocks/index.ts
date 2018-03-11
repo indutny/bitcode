@@ -2,6 +2,8 @@ export { Block } from './base';
 export { ConstantBlock } from './constant';
 export { FunctionBlock } from './function';
 export { MetadataBlock } from './metadata';
+export { MetadataAttachmentBlock } from './metadata-attachment';
+export { MetadataKindBlock } from './metadata-kind';
 export { ParamAttrBlock } from './param-attr';
 export { StrtabBlock } from './strtab';
 export { TypeBlock } from './type';

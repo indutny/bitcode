@@ -4,6 +4,7 @@ export const BLOCK_ID = {
   FUNCTION: 12,
   METADATA: 15,
   METADATA_ATTACHMENT: 16,
+  METADATA_KIND: 22,
   MODULE: 8,
   PARAMATTR: 9,
   PARAMATTR_GROUP: 10,
@@ -126,6 +127,14 @@ export const METADATA_CODE = {
   VALUE: 2,
 };
 
+export const METADATA_ATTACHMENT_CODE = {
+  ATTACHMENT: 11,
+};
+
+export const METADATA_KIND_CODE = {
+  KIND: 6,
+};
+
 export const FIXED = {
   BINOP_TYPE: 4,
   BOOL: 1,
@@ -146,6 +155,7 @@ export const VBR = {
   INTEGER: 8,
   INT_WIDTH: 8,
   METADATA_INDEX: 6,
+  METADATA_KIND_INDEX: 6,
   METADATA_STRING_COUNT: 6,
   METADATA_STRING_OFF: 6,
   STRTAB_LENGTH: 6,

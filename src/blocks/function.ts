@@ -13,6 +13,7 @@ import { Enumerator } from '../enumerator';
 import { Block } from './base';
 import { ConstantBlock } from './constant';
 import { MetadataBlock } from './metadata';
+import { MetadataAttachmentBlock } from './metadata-attachment';
 import { TypeBlock } from './type';
 
 import constants = values.constants;
@@ -154,6 +155,10 @@ export class FunctionBlock extends Block {
     }
 
     this.buildSymtab(writer, blocks);
+
+    const attachment = new MetadataAttachmentBlock(fnMetadata, fn,
+      this.enumerator.getMetadataKinds());
+    attachment.build(writer);
 
     writer.endBlock(BLOCK_ID.FUNCTION);
   }

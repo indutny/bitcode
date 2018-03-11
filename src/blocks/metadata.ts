@@ -194,7 +194,7 @@ export class MetadataBlock extends Block {
   private buildTuples(writer: BitStream): void {
     for (const tuple of this.tuples) {
       writer.writeRecord('tuple', [
-        tuple.operands.map((operand) => this.get(operand)),
+        tuple.operands.map((operand) => 1 + this.get(operand)),
       ]);
     }
   }

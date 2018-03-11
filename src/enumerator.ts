@@ -30,6 +30,7 @@ export class Enumerator {
   private globalConstants: Constant[] = [];
   private functionConstants: Map<constants.Func, Constant[]> = new Map();
   private functionMetadata: Map<constants.Func, Metadata[]> = new Map();
+  private metadataKinds: Map<string, number> = new Map();
   private lastEmittedIndex: number = 0;
 
   private constList: Constant[] | undefined;
@@ -80,6 +81,10 @@ export class Enumerator {
   public getFunctionConstants(fn: constants.Func): ConstantList {
     assert(this.functionConstants.has(fn), `Unexpected function: "${fn.name}"`);
     return this.functionConstants.get(fn)!;
+  }
+
+  public getMetadataKinds(): ReadonlyMap<string, number> {
+    return this.metadataKinds;
   }
 
   public getFunctionMetadata(fn: constants.Func): ReadonlyArray<Metadata> {
@@ -176,7 +181,10 @@ export class Enumerator {
       }
 
       if (mode === EnumerationMode.CONSTANTS_ONLY) {
-        instr.metadata.forEach((metadata) => {
+        instr.metadata.forEach((metadata, key) => {
+          if (!this.metadataKinds.has(key)) {
+            this.metadataKinds.set(key, this.metadataKinds.size);
+          }
           this.enumerateMetadata(metadata);
         });
       }

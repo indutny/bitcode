@@ -5,8 +5,8 @@ import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
 import {
-  ConstantBlock, FunctionBlock, MetadataBlock, ParamAttrBlock, StrtabBlock,
-  TypeBlock,
+  ConstantBlock, FunctionBlock, MetadataBlock, MetadataKindBlock,
+  ParamAttrBlock, StrtabBlock, TypeBlock,
 } from './blocks';
 import {
   BLOCK_ID, FIXED, MODULE_CODE, UNNAMED_ADDR, VBR, VISIBILITY,
@@ -96,6 +96,10 @@ export class Module {
     for (const fn of this.fns) {
       this.paramAttrBlock.addDecl(fn);
     }
+
+    const metadataKindBlock = new MetadataKindBlock(
+      this.enumerator.getMetadataKinds());
+    metadataKindBlock.build(writer);
 
     this.paramAttrBlock.build(writer);
 
