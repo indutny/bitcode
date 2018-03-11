@@ -198,6 +198,21 @@ export class FunctionBlock extends Block {
         blockIds.get(instr.onFalse)!,
         relativeId(instr.condition),
       ]);
+    } else if (instr instanceof instructions.Switch) {
+      assert(blockIds.has(instr.otherwise), 'Unknown block');
+      assert(instr.cases.every((c) => blockIds.has(c.block)), 'Unknown block');
+
+      const operands = [
+        this.typeBlock.get(instr.condition.ty),
+        relativeId(instr.condition),
+        blockIds.get(instr.otherwise)!,
+      ];
+
+      for (const c of instr.cases) {
+        operands.push(this.enumerator.get(c.value), blockIds.get(c.block)!);
+      }
+
+      writer.writeUnabbrRecord(FUNCTION_CODE.INST_SWITCH, operands);
     } else if (instr instanceof instructions.Unreachable) {
       writer.writeRecord('unreachable', []);
 

@@ -112,6 +112,37 @@ describe('bitcode/compiler', () => {
     m.add(glob);
 
     const bc = m.build();
+
+    // TODO(indutny): run `opt -S` and check the result
+  });
+
+  it('should compile a switch statement', () => {
+    const i8 = b.i(8);
+
+    // Build a function
+    const fn = b.signature(i8, [ i8 ]).defineFunction('fn_name', [ 'p' ]);
+
+    const otherwise = fn.createBlock('otherwise');
+    const b0 = fn.createBlock('b0');
+    const b1 = fn.createBlock('b1');
+    const b2 = fn.createBlock('b2');
+
+    fn.body.switch(fn.getArgument('p'), otherwise, [
+      { value: i8.val(0), block: b0 },
+      { value: i8.val(1), block: b1 },
+      { value: i8.val(2), block: b2 },
+    ]);
+
+    otherwise.unreachable();
+    b0.ret(i8.val(10));
+    b1.ret(i8.val(20));
+    b2.ret(i8.val(30));
+
+    m.add(fn);
+
+    const bc = m.build();
     require('fs').writeFileSync('/tmp/1.bc', bc);
+
+    // TODO(indutny): run `opt -S` and check the result
   });
 });

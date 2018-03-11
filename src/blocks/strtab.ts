@@ -40,15 +40,18 @@ export class StrtabBlock extends Block {
 
   public build(writer: BitStream): void {
     super.build(writer);
+
+    if (this.list.length === 0) {
+      return;
+    }
+
     writer.enterBlock(BLOCK_ID.STRTAB, STRTAB_ABBR_ID_WIDTH);
 
     // TODO(indutny): can we do char6 here?
-    if (this.list.length !== 0) {
-      writer.defineAbbr(new Abbr('blob', [
-        Abbr.literal(STRTAB_CODE.BLOB),
-        Abbr.blob(),
-      ]));
-    }
+    writer.defineAbbr(new Abbr('blob', [
+      Abbr.literal(STRTAB_CODE.BLOB),
+      Abbr.blob(),
+    ]));
 
     writer.writeRecord('blob', [
       Buffer.concat(this.list.map((e) => e.buffer), this.totalSize),
