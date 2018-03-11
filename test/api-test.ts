@@ -1,3 +1,5 @@
+import * as assert from 'assert';
+
 import { Builder } from 'bitcode-builder';
 import { Module } from '../src/bitcode';
 
@@ -99,7 +101,14 @@ describe('bitcode/compiler', () => {
     bb5.ret(i3);
 
     m.add(fn);
+    assert.throws(() => m.add(fn), /clash/);
+
+    // Adding the same declaration twice should have no effect
     m.add(extra);
+    m.add(extra);
+
+    // Same with globals
+    m.add(glob);
     m.add(glob);
 
     const bc = m.build();

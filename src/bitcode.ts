@@ -23,9 +23,10 @@ const MODULE_ABBR_ID_WIDTH = 3;
 export { Builder };
 
 export class Module {
+  private readonly usedNames = new Set();
   private readonly fns: constants.Func[] = [];
-  private readonly decls: constants.Declaration[] = [];
-  private readonly globals: values.Global[] = [];
+  private readonly decls: Map<string, constants.Declaration> = new Map();
+  private readonly globals: Map<string, values.Global> = new Map();
   private readonly enumerator: Enumerator = new Enumerator();
   private readonly typeBlock: TypeBlock = new TypeBlock();
   private readonly paramAttrBlock: ParamAttrBlock = new ParamAttrBlock();
@@ -35,15 +36,37 @@ export class Module {
   }
 
   public addFunction(fn: constants.Func): void {
+    this.useGlobalName(fn.name);
     this.fns.push(fn);
   }
 
   public addDeclaration(decl: constants.Declaration): void {
-    this.decls.push(decl);
+    if (this.decls.has(decl.name)) {
+      const existing = this.decls.get(decl.name)!;
+      assert(decl.ty.isEqual(existing.ty),
+        'Declaration already exists with a different type: ' +
+        `"${existing.ty.typeString}"`);
+
+      // TODO(indutny): verify attributes
+      return;
+    }
+
+    this.useGlobalName(decl.name);
+    this.decls.set(decl.name, decl);
   }
 
   public addGlobal(g: values.Global): void {
-    this.globals.push(g);
+    if (this.globals.has(g.name)) {
+      const existing = this.globals.get(g.name)!;
+      assert(g.ty.isEqual(existing.ty),
+        'Global already exists with a different type: ' +
+        `"${existing.ty.typeString}"`);
+
+      // TODO(indutny): attributes, metadata
+      return;
+    }
+    this.useGlobalName(g.name);
+    this.globals.set(g.name, g);
   }
 
   public build(): Buffer {
@@ -67,12 +90,15 @@ export class Module {
       writer.writeRecord('filename', [ arr ]);
     }
 
+    const decls = Array.from(this.decls.values());
+    const globals = Array.from(this.globals.values());
+
     // LLVM enumerates values in specific order, attach id to each before
     // emitting binary data
     this.enumerator.enumerate({
-      decls: this.decls,
+      decls,
       fns: this.fns,
-      globals: this.globals,
+      globals,
     });
 
     // Add types from used values
@@ -83,12 +109,12 @@ export class Module {
     this.typeBlock.build(writer);
 
     // Add attributes from globals
-    for (const global of this.globals) {
+    for (const global of globals) {
       this.paramAttrBlock.addGlobal(global);
     }
 
     // Add attributes from declarations
-    for (const decl of this.decls) {
+    for (const decl of decls) {
       this.paramAttrBlock.addDecl(decl);
     }
 
@@ -103,7 +129,7 @@ export class Module {
 
     this.paramAttrBlock.build(writer);
 
-    this.buildGlobals(writer);
+    this.buildGlobals(writer, globals);
 
     const globalConstants = new ConstantBlock(this.enumerator, this.typeBlock,
       this.enumerator.getGlobalConstants());
@@ -155,7 +181,7 @@ export class Module {
 
   // TODO(indutny): support section, alignment, etc
   // TODO(indutny): metadata
-  private buildGlobals(writer: BitStream): void {
+  private buildGlobals(writer: BitStream, globals: values.Global[]): void {
     writer.defineAbbr(new Abbr('global', [
       Abbr.literal(MODULE_CODE.GLOBALVAR),
       Abbr.vbr(VBR.STRTAB_OFFSET),
@@ -176,7 +202,7 @@ export class Module {
       Abbr.fixed(FIXED.BOOL),  // dso_local
     ]));
 
-    for (const g of this.globals) {
+    for (const g of globals) {
       const name = this.strtab.add(g.name);
 
       this.enumerator.checkValueOrder(g);
@@ -222,8 +248,9 @@ export class Module {
       Abbr.fixed(FIXED.BOOL),  // dso_local
     ]));
 
-    const decls = (this.fns as constants.Declaration[]).concat(this.decls);
-    for (const decl of decls) {
+    const allDecls = (this.fns as constants.Declaration[])
+      .concat(Array.from(this.decls.values()));
+    for (const decl of allDecls) {
       const name = this.strtab.add(decl.name);
 
       this.enumerator.checkValueOrder(decl);
@@ -252,5 +279,12 @@ export class Module {
       const block = new FunctionBlock(this.enumerator, this.typeBlock, fn);
       block.build(writer);
     }
+  }
+
+  private useGlobalName(name: string) {
+    if (this.usedNames.has(name)) {
+      throw new Error(`Global name clash for: "${name}"`);
+    }
+    this.usedNames.add(name);
   }
 }
