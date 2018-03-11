@@ -82,7 +82,7 @@ export class FunctionBlock extends Block {
         Abbr.fixed(FIXED.BOOL),  // isVolatile
       ]),
       new Abbr('store', [
-        Abbr.literal(FUNCTION_CODE.INST_LOAD),
+        Abbr.literal(FUNCTION_CODE.INST_STORE),
         Abbr.vbr(VBR.VALUE_INDEX),  // ptr
         Abbr.vbr(VBR.VALUE_INDEX),  // value
         Abbr.vbr(VBR.ALIGNMENT),  // alignment

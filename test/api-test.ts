@@ -141,6 +141,31 @@ describe('bitcode/compiler', () => {
     m.add(fn);
 
     const bc = m.build();
+
+    // TODO(indutny): run `opt -S` and check the result
+  });
+
+  it('should store a reference to a function', () => {
+    const struct = b.struct('state');
+
+    const sig = b.signature(b.void(), [ struct.ptr() ]);
+
+    struct.addField(sig.ptr(), 'fn');
+    struct.finalize();
+
+    // Build a function
+    const fn = sig.defineFunction('fn_name', [ 's' ]);
+
+    const ptr = fn.body.getelementptr(fn.getArgument('s'),
+      b.i(32).val(0),
+      b.i(32).val(struct.lookupField('fn').index),
+      true);
+    fn.body.store(fn, ptr);
+    fn.body.ret();
+
+    m.add(fn);
+
+    const bc = m.build();
     require('fs').writeFileSync('/tmp/1.bc', bc);
 
     // TODO(indutny): run `opt -S` and check the result

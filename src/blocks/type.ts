@@ -8,25 +8,25 @@ import { Block } from './base';
 const TYPE_ABBR_ID_WIDTH = 4;
 
 export class TypeBlock extends Block {
-  private readonly list: types.Type[] = [];
+  // typeString => index
+  private readonly indexMap: Map<string, number> = new Map();
 
-  // typeString => index in `list`
-  private readonly map: Map<string, number> = new Map();
+  // typeString => Type in `list`
+  private readonly typeMap: Map<string, types.Type> = new Map();
 
   public add(ty: types.Type): void {
     this.checkNotBuilt();
 
     const key = ty.typeString;
-    if (this.map.has(ty.typeString)) {
-      const cachedIndex = this.map.get(ty.typeString)!;
-      const stored = this.list[cachedIndex]!;
+    if (this.typeMap.has(key)) {
+      const stored = this.typeMap.get(ty.typeString)!;
 
       // Sanity check, types must be compatible
       assert(stored.isEqual(ty), `Incompatible types for: "${key}"`);
       return;
     }
 
-    // Add sub-types first
+    // Add sub-types
     if (ty.isArray()) {
       this.add(ty.toArray().elemType);
     } else if (ty.isPointer()) {
@@ -34,26 +34,37 @@ export class TypeBlock extends Block {
     } else if (ty.isSignature()) {
       this.addSignature(ty.toSignature());
     } else if (ty.isStruct()) {
-      this.addStruct(ty.toStruct());
+      // Break loops created by named structs
+      this.typeMap.set(key, ty);
+
+      const struct = ty.toStruct();
+      this.addStruct(struct);
+
+      // Ensure correct ordering
+      this.typeMap.delete(key);
     }
 
-    const index = this.list.length;
-    this.list.push(ty);
-    this.map.set(key, index);
+    this.typeMap.set(key, ty);
   }
 
   public get(ty: types.Type): number {
-    const key = ty.typeString;
-    assert(this.map.has(key), `Type: "${key}" not found`);
+    this.checkBuilt();
 
-    return (this.map.get(key) as number);
+    const key = ty.typeString;
+    assert(this.indexMap.has(key), `Type: "${key}" not found`);
+
+    return this.indexMap.get(key) as number;
   }
 
   public build(writer: BitStream): void {
     super.build(writer);
+
+    const list = this.enumerate();
+
     writer.enterBlock(BLOCK_ID.TYPE, TYPE_ABBR_ID_WIDTH);
-    writer.writeUnabbrRecord(TYPE_CODE.NUMENTRY, [ this.list.length ]);
-    for (const ty of this.list) {
+    writer.writeUnabbrRecord(TYPE_CODE.NUMENTRY, [ list.length ]);
+    for (const ty of list) {
+      console.log('write', ty.typeString);
       this.write(writer, ty);
     }
     writer.endBlock(BLOCK_ID.TYPE);
@@ -72,6 +83,12 @@ export class TypeBlock extends Block {
     for (const field of struct.fields) {
       this.add(field.ty);
     }
+  }
+
+  private enumerate(): types.Type[] {
+    const list = Array.from(this.typeMap.values());
+    list.forEach((ty, index) => this.indexMap.set(ty.typeString, index));
+    return list;
   }
 
   private write(writer: BitStream, ty: types.Type): void {
