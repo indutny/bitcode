@@ -43,9 +43,8 @@ export class Module {
   public addDeclaration(decl: constants.Declaration): void {
     if (this.decls.has(decl.name)) {
       const existing = this.decls.get(decl.name)!;
-      assert(decl.ty.isEqual(existing.ty),
-        'Declaration already exists with a different type: ' +
-        `"${existing.ty.typeString}"`);
+      assert(decl.isEqual(existing),
+        'Declaration already exists with a different spec');
 
       // TODO(indutny): verify attributes
       return;
@@ -58,11 +57,10 @@ export class Module {
   public addGlobal(g: values.Global): void {
     if (this.globals.has(g.name)) {
       const existing = this.globals.get(g.name)!;
+      // TODO(indutny): linkage, and so on
       assert(g.ty.isEqual(existing.ty),
         'Global already exists with a different type: ' +
         `"${existing.ty.typeString}"`);
-
-      // TODO(indutny): attributes, metadata
       return;
     }
     this.useGlobalName(g.name);
