@@ -242,6 +242,7 @@ export class Module {
       Abbr.literal(0),  // prologue
       Abbr.literal(0),  // dllstorageclass
       Abbr.literal(0),  // comdat
+      Abbr.literal(0),  // prefix
       Abbr.literal(0),  // personality
       Abbr.fixed(FIXED.BOOL),  // dso_local
     ]));
