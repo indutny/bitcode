@@ -28,6 +28,22 @@ In fact, it has barely enough instructions to be useful in [llparse][5]. Should
 you have any need in more types/instructions for your project - please do not
 hesitate to file a bug, or (better) send a Pull Request for the feature.
 
+In particular:
+
+* floating point is not supported
+* floating-point related optimization features (for calls, and so on) are
+  absent
+* int64 constant values are limited to int32 range
+* vectors are not supported
+* opaque structure fields are not supported
+* try/catch-related instructions are not supported
+* stack allocation is not supported
+* memory fencing, and atomics is not supported
+* no addrspace support
+* no varargs
+* no GC support even
+* probably more
+
 ## Usage
 
 See [`bitcode-builder`][0] for Builder API.
