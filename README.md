@@ -6,7 +6,7 @@ Generate binary bitcode with JS API and no C++ bindings.
 
 ## Usage
 
-See [bitcode-builder][0] for Builder API.
+See [`bitcode-builder`][0] for Builder API.
 
 ```typescript
 import * as fs from 'fs';
