@@ -4,6 +4,9 @@
   "description": "LLVM bitcode generator",
   "main": "lib/bitcode.js",
   "types": "lib/bitcode.d.ts",
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib",
