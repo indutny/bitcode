@@ -99,6 +99,7 @@ export function encodeICmpPredicate(predicate: instructions.ICmpPredicate)
     case 'eq': return 32;
     case 'ne': return 33;
     case 'ugt': return 34;
+    case 'uge': return 35;
     case 'ult': return 36;
     case 'ule': return 37;
     case 'sgt': return 38;
