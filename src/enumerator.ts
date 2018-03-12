@@ -126,6 +126,10 @@ export class Enumerator {
       return;
     }
 
+   if (value instanceof values.constants.Declaration) {
+     throw new Error('Missing declaration: ' + value.name);
+   }
+
     this.map.set(value, this.index);
 
     if (!value.ty.isVoid()) {
@@ -181,8 +185,7 @@ export class Enumerator {
   }
 
   private enumerateDeclaration(decl: constants.Declaration): void {
-    // Nothing special, so far
-    this.enumerateValue(decl);
+    this.map.set(decl, this.index++);
   }
 
   private enumerateBlock(bb: values.BasicBlock, mode: EnumerationMode): void {
