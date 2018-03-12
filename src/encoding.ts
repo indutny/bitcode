@@ -49,10 +49,11 @@ export function encodeSigned(value: number): number {
   value |= 0;
 
   if (value < 0) {
-    return (-value << 1) | 1;
+    value = (-value << 1) | 1;
   } else {
-    return value << 1;
+    value = value << 1;
   }
+  return value >>> 0;
 }
 
 export function encodeCastType(cast: instructions.CastType): number {
