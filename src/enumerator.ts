@@ -126,9 +126,9 @@ export class Enumerator {
       return;
     }
 
-   if (value instanceof values.constants.Declaration) {
-     throw new Error('Missing declaration: ' + value.name);
-   }
+    if (value instanceof values.constants.Declaration) {
+      throw new Error('Missing declaration: ' + value.name);
+    }
 
     this.map.set(value, this.index);
 
