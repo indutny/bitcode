@@ -27,6 +27,7 @@ export type ConstantList = ReadonlyArray<Constant>;
 export class Enumerator {
   private map: Map<values.Value, number> = new Map();
   private index: number = 0;
+  private lastGlobalIndex: number = 0;
   private globalConstants: Constant[] = [];
   private functionConstants: Map<constants.Func, Constant[]> = new Map();
   private functionMetadata: Map<constants.Func, Metadata[]> = new Map();
@@ -58,6 +59,8 @@ export class Enumerator {
     for (const decl of input.decls) {
       this.enumerateDeclaration(decl);
     }
+
+    this.lastGlobalIndex = this.index;
 
     // 5. Enumerate function bodies
     for (const fn of input.fns) {
@@ -98,6 +101,12 @@ export class Enumerator {
     assert(index >= this.lastEmittedIndex,
       'Invalid order of values (internal error)');
     this.lastEmittedIndex = index;
+  }
+
+  public leaveFunction(): void {
+    assert(this.lastEmittedIndex >= this.lastGlobalIndex,
+      'Invalid order of values (internal error)');
+    this.lastEmittedIndex = this.lastGlobalIndex;
   }
 
   // Private API
@@ -166,6 +175,9 @@ export class Enumerator {
 
     this.functionConstants.set(fn, constList);
     this.functionMetadata.set(fn, metadataList);
+
+    // Leave the function
+    this.index = this.lastGlobalIndex;
   }
 
   private enumerateDeclaration(decl: constants.Declaration): void {

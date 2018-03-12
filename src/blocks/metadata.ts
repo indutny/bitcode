@@ -184,8 +184,14 @@ export class MetadataBlock extends Block {
 
   private buildValues(writer: BitStream): void {
     for (const value of this.values) {
+      let ty = value.value.ty;
+
+      // Store pointers to functions
+      if (ty.isSignature()) {
+        ty = ty.ptr();
+      }
       writer.writeRecord('value', [
-        this.typeBlock.get(value.value.ty),
+        this.typeBlock.get(ty),
         this.enumerator.get(value.value),
       ]);
     }

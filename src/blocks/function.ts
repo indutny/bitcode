@@ -161,6 +161,9 @@ export class FunctionBlock extends Block {
     attachment.build(writer);
 
     writer.endBlock(BLOCK_ID.FUNCTION);
+
+    // Reset last emitted id
+    this.enumerator.leaveFunction();
   }
 
   // TODO(indutny): metadata
