@@ -2,7 +2,31 @@
 [![Build Status](https://secure.travis-ci.org/indutny/bitcode.svg)](http://travis-ci.org/indutny/bitcode)
 [![NPM version](https://badge.fury.io/js/bitcode.svg)](https://badge.fury.io/js/bitcode)
 
-Generate binary bitcode with JS API and no C++ bindings.
+Generate LLVM bitcode with JS API and no C++ bindings.
+
+## What is bitcode?
+
+[LLVM bitcode][1] is a binary representation of [LLVM IR][2] (where `IR` stands
+for Intermediate Representation, and [LLVM][3] is a compiler infrastructure that
+is used for building C/C++/swift/rust/etc projects with [clang][4]).
+
+## Who needs this project?
+
+LLVM is perfect for building languages, and for tools that generate machine
+code. Instead of manual support of multiple architectures (e.g. x86_64, arm,
+arm64), an architecture-independent Intermediate Representation might be
+generated out of the source program. LLVM takes this representation and
+transforms it to highly-optimized machine code.
+
+Usually this is achieved through C/C++ API of LLVM. This project, however, does
+the same thing using only JavaScript and Node.js Buffer API.
+
+## Limitations
+
+There're tons of unsupported instructions and data types in this module.
+In fact, it has barely enough instructions to be useful in [llparse][5]. Should
+you have any need in more types/instructions for your project - please do not
+hesitate to file a bug, or (better) send a Pull Request for the feature.
 
 ## Usage
 
@@ -34,7 +58,7 @@ bitcode.add(fn);
 fs.writeFileSync('out.bc', bitcode.build());
 ```
 
-Running `opt -S out.bc` will print:
+Running `opt -S out.bc` (`opt` is a part of LLVM suite) will print:
 
 ```bitcode
 ; ModuleID = 'out.bc'
@@ -72,3 +96,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 [0]: https://github.com/indutny/bitcode-builder
+[1]: https://llvm.org/docs/BitCodeFormat.html
+[2]: https://llvm.org/docs/LangRef.html
+[3]: http://llvm.org/
+[4]: https://clang.llvm.org/
+[5]: http://github.com/indutny/llparse
