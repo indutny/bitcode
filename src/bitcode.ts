@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import { Builder, values } from 'bitcode-builder';
+import { Builder, passes, values } from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
@@ -68,6 +68,8 @@ export class Module {
   }
 
   public build(): Buffer {
+    this.verify();
+
     const writer: BitStream = new BitStream({
       magic: MAGIC,
     });
@@ -166,6 +168,16 @@ export class Module {
   }
 
   // Private API
+
+  private verify(): void {
+    const pass = new passes.Verify({
+      declarations: Array.from(this.decls.values()),
+      functions: this.fns,
+      globals: Array.from(this.globals.values()),
+    });
+
+    pass.run();
+  }
 
   private defineBlockInfo(writer: BitStream): void {
     const info: BlockInfoMap = new Map();
