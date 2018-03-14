@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 
-import { Builder, passes, values } from 'bitcode-builder';
+import * as builder from 'bitcode-builder';
 import { Buffer } from 'buffer';
 
 import { Abbr, BitStream, BlockInfoMap } from './bitstream';
@@ -14,13 +14,16 @@ import {
 import { encodeCConv, encodeLinkage } from './encoding';
 import { Enumerator } from './enumerator';
 
+import Builder = builder.Builder;
+import passes = builder.passes;
+import values = builder.values;
 import constants = values.constants;
 
 const MAGIC = 0xdec04342;
 const VERSION = 2;
 const MODULE_ABBR_ID_WIDTH = 3;
 
-export { Builder };
+export { builder, Builder };
 
 export class Module {
   private readonly usedNames = new Set();
