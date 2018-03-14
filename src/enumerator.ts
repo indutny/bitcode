@@ -25,6 +25,7 @@ export interface IEnumeratorInput {
 export type ConstantList = ReadonlyArray<Constant>;
 
 export class Enumerator {
+  private globals: Map<string, values.Value> = new Map();
   private map: Map<values.Value, number> = new Map();
   private index: number = 0;
   private lastGlobalIndex: number = 0;
@@ -40,7 +41,9 @@ export class Enumerator {
   public enumerate(input: IEnumeratorInput): void {
     // 1. Enumerate globals
     for (const g of input.globals) {
-      this.enumerateValue(g);
+      assert(!this.globals.has(g.name));
+      this.globals.set(g.name, g);
+      this.enumerateGlobal(g);
     }
 
     // 2. Their initialization values
@@ -57,6 +60,8 @@ export class Enumerator {
 
     // 4. Enumerate declarations
     for (const decl of input.decls) {
+      assert(!this.globals.has(decl.name));
+      this.globals.set(decl.name, decl);
       this.enumerateDeclaration(decl);
     }
 
@@ -126,8 +131,24 @@ export class Enumerator {
       return;
     }
 
-    if (value instanceof values.constants.Declaration) {
-      throw new Error('Missing declaration: ' + value.name);
+    if (value instanceof values.constants.Declaration ||
+        value instanceof values.Global) {
+      // There might be different instances of same declaration/global
+      // redirect them all to the first one
+      if (this.globals.has(value.name)) {
+        const existing = this.globals.get(value.name)!;
+        assert(value.ty.isEqual(existing.ty),
+          'Conflicting type for global/declaration: ' + value.name);
+
+        this.enumerateValue(existing, mode);
+        const existingId = this.map.get(existing);
+        if (existingId !== undefined) {
+          this.map.set(value, existingId);
+        }
+        return;
+      }
+
+      throw new Error('Missing global/declaration: ' + value.name);
     }
 
     this.map.set(value, this.index);
@@ -135,6 +156,10 @@ export class Enumerator {
     if (!value.ty.isVoid()) {
       this.index++;
     }
+  }
+
+  private enumerateGlobal(global: values.Global): void {
+    this.map.set(global, this.index++);
   }
 
   private enumerateGlobalConst(c: Constant): void {

@@ -31,6 +31,6 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "bitcode-builder": "^1.1.0"
+    "bitcode-builder": "^1.1.5"
   }
 }
