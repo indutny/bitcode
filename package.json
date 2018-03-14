@@ -1,6 +1,6 @@
 {
   "name": "bitcode",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "LLVM bitcode generator",
   "main": "lib/bitcode.js",
   "types": "lib/bitcode.d.ts",
