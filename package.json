@@ -5,7 +5,8 @@
   "main": "lib/bitcode.js",
   "types": "lib/bitcode.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "scripts": {
     "build": "tsc",
@@ -31,6 +32,6 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "bitcode-builder": "^1.1.7"
+    "bitcode-builder": "^1.1.9"
   }
 }
