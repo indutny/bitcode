@@ -9,13 +9,13 @@ import constants = values.constants;
 const METADATA_ATTACHMENT_ABBR_ID_WIDTH = 3;
 
 interface IMetadataAttachmentItem {
-  key: number;
-  metadata: constants.Metadata;
+  readonly key: number;
+  readonly metadata: constants.Metadata;
 }
 
 interface IMetadataAttachment {
-  instrId: number;
-  items: IMetadataAttachmentItem[];
+  readonly instrId: number;
+  readonly items: IMetadataAttachmentItem[];
 }
 
 export class MetadataAttachmentBlock extends Block {

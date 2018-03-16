@@ -11,15 +11,15 @@ enum EnumerationMode {
 }
 
 interface IEnumerationState {
-  mode: EnumerationMode;
-  constants: Constant[];
-  metadata: Metadata[];
+  readonly mode: EnumerationMode;
+  readonly constants: Constant[];
+  readonly metadata: Metadata[];
 }
 
 export interface IEnumeratorInput {
-  decls: ReadonlyArray<constants.Declaration>;
-  fns: ReadonlyArray<constants.Func>;
-  globals: ReadonlyArray<values.Global>;
+  readonly decls: ReadonlyArray<constants.Declaration>;
+  readonly fns: ReadonlyArray<constants.Func>;
+  readonly globals: ReadonlyArray<values.Global>;
 }
 
 export type ConstantList = ReadonlyArray<Constant>;

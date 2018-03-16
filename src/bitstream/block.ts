@@ -6,8 +6,8 @@ const MIN_ABBR_ID_WIDTH = 2;
 const ABBR_INDEX_OFF = 4;
 
 export interface IAbbrMapEntry {
-  abbr: Abbr;
-  index: number;
+  readonly abbr: Abbr;
+  readonly index: number;
 }
 
 export class Block {

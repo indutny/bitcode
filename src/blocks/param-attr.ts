@@ -19,16 +19,16 @@ const STRING_ATTR = 3;
 const STRING_ATTR_WITH_DATA = 4;
 
 interface IEncodedAttribute {
-  key: number | string;
-  value: number | string | undefined;
+  readonly key: number | string;
+  readonly value: number | string | undefined;
 }
 
 type GroupId = number;
 
 interface IParamGroup {
-  attrs: IEncodedAttribute[];
-  id: GroupId;
-  paramIndex: number;
+  readonly attrs: IEncodedAttribute[];
+  readonly id: GroupId;
+  readonly paramIndex: number;
 }
 
 type ParamEntry = GroupId[];

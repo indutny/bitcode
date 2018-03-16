@@ -7,9 +7,9 @@ import { Block } from './base';
 const STRTAB_ABBR_ID_WIDTH = 3;
 
 export interface IStrtabEntry {
-  buffer: Buffer;
-  offset: number;
-  length: number;
+  readonly buffer: Buffer;
+  readonly offset: number;
+  readonly length: number;
 }
 
 export class StrtabBlock extends Block {

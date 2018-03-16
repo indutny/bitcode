@@ -24,13 +24,13 @@ const DWORD_BITS = 32;
 const DWORD_BYTES = 4;
 
 interface IStackElem {
-  block: Block;
-  length: Buffer;
-  offset: number;
+  readonly block: Block;
+  readonly length: Buffer;
+  readonly offset: number;
 }
 
 export interface IBitStreamOptions {
-  magic: number | undefined;
+  readonly magic: number | undefined;
 }
 
 export type BlockInfoMap = Map<number, Abbr[]>;

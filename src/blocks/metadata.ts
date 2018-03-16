@@ -16,20 +16,20 @@ const LEN_WRITER_VBR = 6;
 const DWORD_BITS = 32;
 
 interface IMetadataString {
-  type: 'string';
-  index: number;
+  readonly type: 'string';
+  readonly index: number;
 }
 
 interface IMetadataTuple {
-  type: 'tuple';
-  operands: ReadonlyArray<Metadata>;
-  index: number;
+  readonly type: 'tuple';
+  readonly operands: ReadonlyArray<Metadata>;
+  readonly index: number;
 }
 
 interface IMetadataValue {
-  type: 'value';
-  value: Constant;
-  index: number;
+  readonly type: 'value';
+  readonly value: Constant;
+  readonly index: number;
 }
 
 type MetadataEntry = IMetadataString | IMetadataTuple | IMetadataValue;
