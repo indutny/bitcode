@@ -170,7 +170,7 @@ export class ParamAttrBlock extends Block {
     });
 
     // Compute cache key
-    const cacheKeyList: string[] = [];
+    const cacheKeyList: string[] = [ paramIndex.toString() ];
     attrs.forEach((attr) => {
       if (attr.value === undefined) {
         cacheKeyList.push(attr.key.toString());
