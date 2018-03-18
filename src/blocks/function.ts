@@ -225,7 +225,9 @@ export class FunctionBlock extends Block {
 
       const edges = instr.edges;
       for (const edge of edges) {
-        assert(blockIds.get(edge.fromBlock), 'Unknown PHI fromBlock');
+        assert(blockIds.get(edge.fromBlock),
+          `Unknown PHI fromBlock: "${edge.fromBlock}" in ` +
+            `"${edge.fromBlock.parent}"`);
 
         operands.push(encodeSigned(relativeId(edge.value)));
         operands.push(blockIds.get(edge.fromBlock)!);
