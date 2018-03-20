@@ -21,8 +21,10 @@ interface IMetadataString {
 }
 
 interface IMetadataTuple {
+  readonly distinct: boolean;
   readonly type: 'tuple';
   readonly operands: ReadonlyArray<Metadata>;
+  readonly selfReference: boolean;
   readonly index: number;
 }
 
@@ -45,6 +47,10 @@ export class MetadataBlock extends Block {
       ]),
       new Abbr('tuple', [
         Abbr.literal(METADATA_CODE.NODE),
+        Abbr.array(Abbr.vbr(VBR.METADATA_INDEX)),
+      ]),
+      new Abbr('distinct_tuple', [
+        Abbr.literal(METADATA_CODE.DISTINCT_NODE),
         Abbr.array(Abbr.vbr(VBR.METADATA_INDEX)),
       ]),
       new Abbr('value', [
@@ -71,21 +77,7 @@ export class MetadataBlock extends Block {
     this.checkBuilt();
 
     assert(this.map.has(metadata), 'Unknown metadata');
-    const entry = this.map.get(metadata)!;
-
-    // Strings come first
-    if (entry.type === 'string') {
-      return entry.index;
-    }
-
-    // Values after strings
-    if (entry.type === 'value') {
-      return this.strings.size + entry.index;
-    }
-
-    // Time for tuples
-    assert.strictEqual(entry.type, 'tuple');
-    return this.strings.size + this.values.length + entry.index;
+    return this.getEntry(this.map.get(metadata)!);
   }
 
   public build(writer: BitStream): void {
@@ -117,7 +109,7 @@ export class MetadataBlock extends Block {
     if (typeof metadata.value === 'string') {
       res = this.addString(metadata.value);
     } else if (Array.isArray(metadata.value)) {
-      res = this.addTuple(metadata.value);
+      res = this.addTuple(metadata, metadata.value);
     } else {
       res = this.addValue(metadata.value as Constant);
     }
@@ -134,11 +126,14 @@ export class MetadataBlock extends Block {
     return { type: 'string', index };
   }
 
-  private addTuple(operands: ReadonlyArray<Metadata>): IMetadataTuple {
+  private addTuple(metadata: Metadata,
+                   operands: ReadonlyArray<Metadata>): IMetadataTuple {
     operands.forEach((meta) => this.add(meta));
     const res: IMetadataTuple = {
+      distinct: metadata.distinct,
       index: this.tuples.length,
       operands,
+      selfReference: metadata.selfReference,
       type: 'tuple',
     };
     this.tuples.push(res);
@@ -153,6 +148,22 @@ export class MetadataBlock extends Block {
     };
     this.values.push(res);
     return res;
+  }
+
+  private getEntry(entry: MetadataEntry): number {
+    // Strings come first
+    if (entry.type === 'string') {
+      return entry.index;
+    }
+
+    // Values after strings
+    if (entry.type === 'value') {
+      return this.strings.size + entry.index;
+    }
+
+    // Time for tuples
+    assert.strictEqual(entry.type, 'tuple');
+    return this.strings.size + this.values.length + entry.index;
   }
 
   private buildStrings(writer: BitStream): void {
@@ -199,8 +210,12 @@ export class MetadataBlock extends Block {
 
   private buildTuples(writer: BitStream): void {
     for (const tuple of this.tuples) {
-      writer.writeRecord('tuple', [
-        tuple.operands.map((operand) => 1 + this.get(operand)),
+      let operands = tuple.operands.map((operand) => 1 + this.get(operand));
+      if (tuple.selfReference) {
+        operands = [ 1 + this.getEntry(tuple) ].concat(operands);
+      }
+      writer.writeRecord(tuple.distinct ? 'distinct_tuple' : 'tuple', [
+        operands,
       ]);
     }
   }

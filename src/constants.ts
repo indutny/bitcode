@@ -122,6 +122,7 @@ export const PARAMATTR_GROUP_CODE = {
 };
 
 export const METADATA_CODE = {
+  DISTINCT_NODE: 5,
   NODE: 3,
   STRINGS: 35,
   VALUE: 2,
